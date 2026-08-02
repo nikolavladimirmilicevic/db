@@ -60,6 +60,7 @@ nav a:hover{color:var(--cyan-2)}
 .sb-cell .val small{font-family:'Nunito',sans-serif;font-size:13px;font-weight:400;color:var(--cyan-2)}
 
 section{padding:78px 0}
+section.wrap{padding-top:22px;padding-bottom:22px}
 .sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:20px;flex-wrap:wrap}
 .sec-head .idx{font-family:'Nunito',sans-serif;color:var(--muted);font-size:12px;letter-spacing:.2em}
 .sec-head h2{font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(30px,5vw,48px);line-height:1;letter-spacing:.01em;margin-top:8px}
@@ -198,6 +199,11 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
 .pts,.av,.tr-pts,.cell,.tt,.sb-cell .val,thead th,tbody td{font-variant-numeric:tabular-nums}
 .arcs{position:absolute;top:-70px;left:-90px;width:660px;height:660px;z-index:-1;pointer-events:none;opacity:.32}
 @media (max-width:820px){.arcs{width:420px;height:420px;top:-40px;left:-70px;opacity:.4}}
+.squad-stats{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;border-top:1px solid var(--line);padding-top:16px}
+.ss{text-align:center}
+.ss-n{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;color:var(--white);line-height:1}
+.ss-l{font-family:'Nunito',sans-serif;font-size:9.5px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin-top:5px}
+.card.pots .ss-n{color:var(--cyan-2)}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -209,6 +215,7 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
   thead th.hide,tbody td.hide{display:none}
   .perf .hide{display:none}
   .tourns,.squad{grid-template-columns:1fr}
+  section.wrap{padding-top:17px;padding-bottom:17px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 
@@ -300,7 +307,7 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
       <div class="idx">02 / SQUAD</div>
       <h2>The Squad</h2>
     </div>
-    <p>Rating cards built from season stats. The Player of the Season gets the foil card.</p>
+    <p>The crew, their honours and current form. The reigning Player of the Season gets the foil card.</p>
   </div>
   <div class="squad" id="squad-grid"></div>
 </section>
@@ -433,17 +440,13 @@ const SAMPLE_TOURNAMENTS = [
 ];
 
 const SQUAD = [
-  {nick:"Golranče", title:"The Venetian Merchant", role:"CF",  kit:"var(--cyan)",      ovr:89, pots:true,
-   attrs:{OFF:90,FIN:92,DRB:85,PAS:80,DEF:55,PHY:84}},
-  {nick:"Mili", title:"The Gaffer", role:"AMF", kit:"var(--silver)", ovr:86,
-   attrs:{OFF:82,FIN:78,DRB:84,PAS:90,DEF:74,PHY:76}},
-  {nick:"Peđa", title:"The Algorithmist", role:"CMF", kit:"var(--steel)", ovr:84,
-   attrs:{OFF:76,FIN:72,DRB:80,PAS:88,DEF:82,PHY:80}},
-  {nick:"Srki", title:"The Lawyer", role:"CB", kit:"var(--cyan-deep)", ovr:83,
-   attrs:{OFF:66,FIN:64,DRB:70,PAS:74,DEF:90,PHY:86}},
-  {nick:"Nino", title:"The Handler", role:"RWF", kit:"#8ea0da", ovr:82,
-   attrs:{OFF:84,FIN:78,DRB:88,PAS:76,DEF:62,PHY:82}}
+  {nick:"Golranče", title:"The Venetian Merchant", kit:"var(--steel)",     pots:true},
+  {nick:"Mili",     title:"The Gaffer",            kit:"var(--silver)"},
+  {nick:"Peđa",     title:"The Algorithmist",      kit:"#8ea0da"},
+  {nick:"Nino",     title:"The Handler",           kit:"var(--cyan)"},
+  {nick:"Srki",     title:"The Lawyer",            kit:"var(--cyan-deep)"}
 ];
+let CURRENT_PTS = {};
 const HONOURS = [
   {yr:2025, champ:"Mili",  pots:"Erling Haaland (Golranče)", live:true},
   {yr:2024, champ:"Mili",  pots:"?"},
@@ -509,16 +512,31 @@ function renderScorers(list){
       <tbody>${body}</tbody>
     </table>`;
 }
+function ordinal(n){
+  if(n==null) return "-";
+  const s=["th","st","nd","rd"], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+function squadStats(nick){
+  const row = (VECNA.rows||[]).find(r=>r.name===nick);
+  let titles=0, seasons=0, best=null;
+  if(row) row.places.forEach(p=>{ if(p!=null){ seasons++; if(p===1) titles++; if(best==null||p<best) best=p; } });
+  return { titles, seasons, best, pts: CURRENT_PTS[nick] };
+}
 function renderSquad(){
   document.getElementById("squad-grid").innerHTML = SQUAD.map(p=>{
-    const attrs=Object.entries(p.attrs).map(([k,v])=>`
-      <div class="attr"><span class="ab">${k}</span><span class="bar"><i style="width:${v}%"></i></span><span class="av">${v}</span></div>`).join("");
+    const st = squadStats(p.nick);
+    const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
     return `<div class="card ${p.pots?'pots':''}">
       <span class="spine" style="background:${p.kit}"></span>
       ${p.pots?'<span class="pots-badge">Player of the Season</span>':''}
-      <div class="card-top"><div class="ovr"><div class="n">${p.ovr}</div><div class="l">OVR</div></div><span class="role">${p.role}</span></div>
       <div class="who"><div class="nick">${p.nick}</div><div class="title">${p.title}</div></div>
-      <div class="attrs">${attrs}</div>
+      <div class="squad-stats">
+        ${cell(st.seasons, "Seasons")}
+        ${cell(ordinal(st.best), "Best")}
+        ${cell(st.titles, "Titles")}
+        ${cell(st.pts!=null ? nf(st.pts) : "-", "Points")}
+      </div>
     </div>`;
   }).join("");
 }
@@ -640,6 +658,7 @@ async function tryLiveTable(){
   try { tournaments = await loadTournaments(); } catch(e){}
   const rows = applyTournamentStats(base, tournaments);
   renderStandings(rows); setLeader(rows);
+  CURRENT_PTS = {}; rows.forEach(r => CURRENT_PTS[r.nick] = r.pts); renderSquad();
 }
 
 /* ---------- LIVE: top performances from the performances feed ---------- */
@@ -747,7 +766,7 @@ async function tryLiveVecna(){
   renderAllTime(data);
   const champs = championsFromVecna(data);
   HONOURS.forEach(h=>{ if(champs[h.yr]) h.champ = champs[h.yr]; });
-  renderHonours();
+  renderHonours(); renderSquad();
 }
 
 /* ---------- LIVE: Player of the Season = first on each season's performances feed ----------
@@ -780,6 +799,7 @@ renderScorers(SAMPLE_PERFORMANCES);
 }
 renderTournaments(SAMPLE_TOURNAMENTS);
 renderAllTime(VECNA);
+SAMPLE_STANDINGS.forEach(r => CURRENT_PTS[r.nick] = r.pts);
 renderSquad();
 renderHonours();
 
