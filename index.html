@@ -102,7 +102,7 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .scorer .r b{font-family:'Nunito',sans-serif;font-weight:700;font-size:18px}
 .scorer .r em{font-family:'Nunito',sans-serif;font-style:normal;font-size:22px;color:var(--cyan-2);font-weight:700}
 
-.squad{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:20px}
+.squad{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
 .card{position:relative;border-radius:18px;padding:22px;background:linear-gradient(160deg,rgba(255,255,255,.05),transparent 42%),linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .3s cubic-bezier(.2,.7,.3,1);transform-style:preserve-3d;overflow:hidden}
 .card:hover{transform:translateY(-6px)}
 .card .spine{position:absolute;left:0;top:0;bottom:0;width:5px}
@@ -158,7 +158,7 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .perf-name .pn{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;display:block}
 .perf-name .pc{font-size:11px;color:var(--muted)}
 .perf-by{font-family:'Nunito',sans-serif;font-size:12px;color:var(--cyan-2)}
-.tourns{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+.tourns{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
 .tourn{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px;box-shadow:var(--shadow)}
 .tourn-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .tourn-cat{font-family:'Nunito',sans-serif;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border-radius:5px;border:1px solid var(--line)}
@@ -168,12 +168,13 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .cat-Y{color:var(--cyan-2);border-color:var(--cyan-deep);background:rgba(0,184,232,.12)}
 .tourn-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:.01em;flex:1;min-width:110px}
 .tourn-date{font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted)}
-.tr{display:grid;grid-template-columns:24px 1fr auto auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid rgba(170,160,220,.06)}
+.tr{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid rgba(170,160,220,.06)}
+.tr-main{min-width:0;overflow-wrap:anywhere;line-height:1.35}
 .tr:first-of-type{border-top:none}
 .tr-place{font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--muted);text-align:center}
 .tr-place.p1{color:var(--cyan-2)}
 .tr-club{font-size:13px;font-weight:500}
-.tr-by{font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted)}
+.tr-by{font-family:'Nunito',sans-serif;font-size:11px;color:var(--purple-2);margin-left:6px;white-space:nowrap}
 .tr-pts{font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--cyan-2);min-width:36px;text-align:right}
 .tr-pts.zero{color:var(--muted);font-weight:400}
 .alltime-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
@@ -207,6 +208,7 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
   .mini-scorers{grid-template-columns:1fr}
   thead th.hide,tbody td.hide{display:none}
   .perf .hide{display:none}
+  .tourns,.squad{grid-template-columns:1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
 
@@ -555,8 +557,7 @@ function renderTournaments(list){
       ${t.teams.map(tm=>`
         <div class="tr">
           <span class="tr-place ${tm.place===1?'p1':''}">${tm.place==null?'-':tm.place}</span>
-          <span class="tr-club">${tm.club}</span>
-          <span class="tr-by">${tm.by}</span>
+          <span class="tr-main"><span class="tr-club">${tm.club}</span><span class="tr-by">${tm.by}</span></span>
           <span class="tr-pts ${tm.points?'':'zero'}">${tm.points?tm.points.toLocaleString('en-US'):'-'}</span>
         </div>`).join("")}
     </div>`).join("");
@@ -753,16 +754,17 @@ async function tryLiveVecna(){
    All season performance feeds share one structure, so the same parser works for each. */
 const POTS_GID = { 2025:"1951291892", 2024:"594423722", 2023:"1833206681", 2022:"1395917262", 2021:"1005506799" };
 async function tryLivePOTS(){
-  await Promise.allSettled(Object.keys(POTS_GID).map(async y=>{
-    const res = await fetch(csvUrl(POTS_GID[y]), {mode:"cors"});
-    if(!res.ok) return;
-    const list = parse26i(await res.text());
-    if(!list.length) return;
-    const top = list[0];
-    const h = HONOURS.find(x=>x.yr == y);
-    if(h) h.pots = `${top.player} (${top.by})`;
-  }));
-  renderHonours();
+  for(const y of Object.keys(POTS_GID)){
+    try{
+      const res = await fetch(csvUrl(POTS_GID[y]), {mode:"cors"});
+      if(!res.ok) continue;
+      const list = parse26i(await res.text());
+      if(!list.length) continue;
+      const top = list[0];
+      const h = HONOURS.find(x=>x.yr == y);
+      if(h){ h.pots = `${top.player} (${top.by})`; renderHonours(); }
+    }catch(e){}
+  }
 }
 
 /* first paint: real fallback numbers so the page works immediately */
@@ -781,16 +783,20 @@ renderAllTime(VECNA);
 renderSquad();
 renderHonours();
 
-/* then try live, each part independent and quiet on failure */
+/* then try live, each part independent and quiet on failure.
+   Main sections first; Player of the Season is deferred so it never
+   competes with the larger feeds for the first, most important requests. */
 tryLiveTable().catch(()=>console.info("Standings not loaded, showing last snapshot."));
-tryLiveScorers().catch(()=>console.info("Performances not loaded, showing last snapshot."));
 tryLiveTournaments().catch(()=>console.info("Tournaments not loaded, showing last snapshot."));
+tryLiveScorers().catch(()=>console.info("Performances not loaded, showing last snapshot."));
 tryLiveVecna().catch(()=>console.info("All-time not loaded, showing last snapshot."));
-tryLivePOTS().catch(()=>console.info("Player of the Season not loaded."));
+setTimeout(()=>{ tryLivePOTS().catch(()=>console.info("Player of the Season not loaded.")); }, 1200);
 
 /* reveal on scroll */
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("in")}),{threshold:.12});
-document.querySelectorAll(".reveal").forEach((el,i)=>{el.style.transitionDelay=(i*60)+"ms";io.observe(el)});
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("in")}),{threshold:.08});
+document.querySelectorAll(".reveal").forEach((el,i)=>{el.style.transitionDelay=(i*50)+"ms";io.observe(el)});
+/* safety net: if the observer ever misses on a device, reveal everything anyway */
+setTimeout(()=>document.querySelectorAll(".reveal").forEach(el=>el.classList.add("in")), 1600);
 
 /* subtle card tilt */
 if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
