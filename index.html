@@ -102,7 +102,7 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .scorer .r b{font-family:'Nunito',sans-serif;font-weight:700;font-size:18px}
 .scorer .r em{font-family:'Nunito',sans-serif;font-style:normal;font-size:22px;color:var(--cyan-2);font-weight:700}
 
-.squad{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:20px}
+.squad{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:20px}
 .card{position:relative;border-radius:18px;padding:22px;background:linear-gradient(160deg,rgba(255,255,255,.05),transparent 42%),linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--line);box-shadow:var(--shadow);transition:transform .3s cubic-bezier(.2,.7,.3,1);transform-style:preserve-3d;overflow:hidden}
 .card:hover{transform:translateY(-6px)}
 .card .spine{position:absolute;left:0;top:0;bottom:0;width:5px}
@@ -158,7 +158,7 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .perf-name .pn{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;display:block}
 .perf-name .pc{font-size:11px;color:var(--muted)}
 .perf-by{font-family:'Nunito',sans-serif;font-size:12px;color:var(--cyan-2)}
-.tourns{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.tourns{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
 .tourn{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:18px;box-shadow:var(--shadow)}
 .tourn-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .tourn-cat{font-family:'Nunito',sans-serif;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:4px 8px;border-radius:5px;border:1px solid var(--line)}
@@ -619,16 +619,24 @@ function applyTournamentStats(standings, tournaments){
     return { ...r, ttl:st.ttl, fin:st.fin, sf:st.sf, form:st.seq.slice(-5) };
   });
 }
+/* the tournaments feed is the largest one and is used by two sections,
+   so fetch and parse it a single time and share the result */
+let _tournamentsPromise = null;
+function loadTournaments(){
+  if(!_tournamentsPromise){
+    _tournamentsPromise = fetch(csvUrl(GID.tournaments), {mode:"cors"})
+      .then(r => r.ok ? r.text() : Promise.reject(new Error("tournaments unavailable")))
+      .then(txt => parse26tu(txt));
+  }
+  return _tournamentsPromise;
+}
 async function tryLiveTable(){
-  const [r1, r2] = await Promise.all([
-    fetch(csvUrl(GID.table), {mode:"cors"}),
-    fetch(csvUrl(GID.tournaments), {mode:"cors"}).catch(()=>null)
-  ]);
-  if(!r1.ok) throw new Error("table unavailable");
-  const base = parse26ta(await r1.text());
+  const res = await fetch(csvUrl(GID.table), {mode:"cors"});
+  if(!res.ok) throw new Error("table unavailable");
+  const base = parse26ta(await res.text());
   if(!base.length) throw new Error("no rows parsed");
   let tournaments = [];
-  if(r2 && r2.ok){ try { tournaments = parse26tu(await r2.text()); } catch(e){} }
+  try { tournaments = await loadTournaments(); } catch(e){}
   const rows = applyTournamentStats(base, tournaments);
   renderStandings(rows); setLeader(rows);
 }
@@ -699,9 +707,7 @@ function parse26tu(csvText){
   return out.sort((a,b)=>tournKey(b.date)-tournKey(a.date));
 }
 async function tryLiveTournaments(){
-  const res = await fetch(csvUrl(GID.tournaments), {mode:"cors"});
-  if(!res.ok) throw new Error("turniri unavailable");
-  const list = parse26tu(await res.text());
+  const list = await loadTournaments();
   if(!list.length) throw new Error("no tournaments");
   renderTournaments(list);
 }
