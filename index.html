@@ -725,15 +725,19 @@ function renderSquad(){
   }).join("");
 }
 function renderHonours(){
+  const lastCompleted = Math.max(...HONOURS.filter(x=>!x.current).map(x=>x.yr));
+  const TROPHY = '<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>';
+  const HOURGLASS = '<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 2 3.5l2 1.4 2-1.4a4 4 0 0 0 2-3.5V3M8 21v-3.5a4 4 0 0 1 2-3.5l2-1.4 2 1.4a4 4 0 0 1 2 3.5V21"/></svg>';
   document.getElementById("honours").innerHTML = HONOURS.map(h=>{
     const on = !!(SEASON_GIDS[h.yr] || LEGACY_GID[h.yr]);
     const tag = on ? "a" : "div";
     const href = on ? ` href="#season-${h.yr}"` : "";
     const champLabel = h.current ? "Leader" : "Champion";
     const potsLabel  = h.current ? "Top performer" : "Player of the Season";
+    const icon = h.current ? HOURGLASS : (h.yr===lastCompleted ? TROPHY : "");
     return `
     <${tag} class="year ${h.current?'live':''} ${on?'clickable':''}"${href}>
-      ${h.current?'<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>':''}
+      ${icon}
       <div class="yr">${h.yr}</div>
       <div class="row"><div class="k">${champLabel}</div><div class="v">${h.champ}</div></div>
       ${(h.pots && h.pots!=="?") ? `<div class="row"><div class="k">${potsLabel}</div><div class="v">${h.pots}</div></div>` : ""}
