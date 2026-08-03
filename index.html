@@ -794,18 +794,30 @@ async function tryLiveVecna(){
 
 /* ---------- LIVE: Player of the Season = first on each season's performances feed ----------
    All season performance feeds share one structure, so the same parser works for each. */
-const POTS_GID = { 2025:"1951291892", 2024:"594423722", 2023:"1833206681", 2022:"1395917262", 2021:"1005506799" };
+/* For each completed season, the scorers tab is one of two middle tabs
+   (older seasons order them ta, tu, i, b; 2026 orders ta, i, tu, b).
+   Try both candidate gids and use whichever actually parses as a scorers tab. */
+const POTS_GID = {
+  2025: ["1951291892","158409025"],
+  2024: ["594423722","1748337977"],
+  2023: ["1833206681","267862956"],
+  2022: ["1395917262","934274190"],
+  2021: ["1005506799","1401607330"]
+};
 async function tryLivePOTS(){
   for(const y of Object.keys(POTS_GID)){
-    try{
-      const res = await fetch(csvUrl(POTS_GID[y]), {mode:"cors"});
-      if(!res.ok) continue;
-      const list = parse26i(await res.text());
-      if(!list.length) continue;
-      const top = list[0];
-      const h = HONOURS.find(x=>x.yr == y);
-      if(h){ h.pots = top.by ? `${top.player} (${top.by})` : top.player; renderHonours(); }
-    }catch(e){}
+    for(const gid of POTS_GID[y]){
+      try{
+        const res = await fetch(csvUrl(gid), {mode:"cors"});
+        if(!res.ok) continue;
+        const list = parse26i(await res.text());   // throws if this tab has no scorers header
+        if(!list.length) continue;
+        const top = list[0];
+        const h = HONOURS.find(x=>x.yr == y);
+        if(h){ h.pots = top.by ? `${top.player} (${top.by})` : top.player; renderHonours(); }
+        break;   // found the scorers tab for this season
+      }catch(e){ /* wrong tab, try the next candidate */ }
+    }
   }
 }
 
