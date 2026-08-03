@@ -230,6 +230,13 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .raw-wrap::-webkit-scrollbar-track,.alltime-wrap::-webkit-scrollbar-track,.honours::-webkit-scrollbar-track{background:transparent}
 .raw-wrap::-webkit-scrollbar-thumb,.alltime-wrap::-webkit-scrollbar-thumb,.honours::-webkit-scrollbar-thumb{background:rgba(170,160,220,.22);border-radius:5px;border:2px solid transparent;background-clip:padding-box}
 .raw-wrap::-webkit-scrollbar-thumb:hover,.alltime-wrap::-webkit-scrollbar-thumb:hover,.honours::-webkit-scrollbar-thumb:hover{background:rgba(170,160,220,.4);background-clip:padding-box}
+.breakdown th.bd-month{text-align:center;font-size:10px;padding:7px 6px;color:var(--white);font-weight:700;border-bottom:1px solid var(--line)}
+.breakdown th.bd-sub{text-align:center;font-size:9px;padding:5px 5px;color:var(--muted);font-weight:700;letter-spacing:0}
+.breakdown th.bd-fix,.breakdown th.bd-name{vertical-align:middle}
+.breakdown th.bd-name,.breakdown td.bd-name{text-align:left;padding-left:14px;font-weight:700}
+.breakdown td{text-align:center}
+.breakdown td.bd-total,.breakdown th.bd-total-h{color:var(--cyan-2);font-weight:800}
+.bd-m0{background:rgba(0,184,232,.15)}.bd-m1{background:rgba(96,96,200,.17)}.bd-m2{background:rgba(0,184,232,.22)}.bd-m3{background:rgba(96,96,200,.11)}.bd-m4{background:rgba(0,184,232,.10)}.bd-m5{background:rgba(96,96,200,.19)}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -559,6 +566,30 @@ const SEASON_GIDS = {
   2020: ["1895303171","0","176368166","606585396"]
 };
 
+/* Serbian -> English for anything read straight from the sheet */
+const TR = {
+  "rang":"Rank","takmicar":"Player","igrac":"Player",
+  "termin":"Month","scenario":"Scenario","kategorija":"Category",
+  "ucesnici":"Participants","bodovanje":"Scoring",
+  "titula":"Title","finale":"Final","polufinale":"Semi-final",
+  "datum":"Date","naziv":"Name","predlozio":"Proposed by",
+  "tim":"Team","zvezdice":"Stars","prosek":"Average",
+  "najbolji fw":"Best FW","najbolji mf":"Best MF","najbolji df":"Best DF","najbolji gk":"Best GK",
+  "mesto":"Place","bodovi":"Points","golovi":"Goals",
+  "asistencije":"Assists","asistencija":"Assists","ukupno":"Total",
+  "sep":"Sep","okt":"Oct","nov":"Nov","dec":"Dec","jan":"Jan","feb":"Feb",
+  "mart":"Mar","apr":"Apr","maj":"May","jun":"Jun","jul":"Jul","avg":"Aug",
+  "mesecni":"Monthly","kvartalni":"Quarterly","godisnji":"Annual","ad hoc":"Ad hoc",
+  "najbolja 4 iz prethodnog meseca":"Top 4 from the previous month",
+  "najbolja 4 iz prethodnog kvartala":"Top 4 from the previous quarter",
+  "najbolja 4 iz prethodnih 12 meseci":"Top 4 from the previous 12 months",
+  "bilo ko":"Anyone","svi":"All",
+  "bilo kad, bilo sta, bilo ko":"Anytime, anything, anyone",
+  "liga sampiona":"Champions League","reprezentacije":"National teams",
+  "67 za svaki bod u grupi":"67 per point in the group stage"
+};
+function tr(text){ const k = normHeader(text); return TR[k] || text; }
+
 /* ---------- render ---------- */
 const nf = n => n.toLocaleString('en-US');
 function setLeader(s){ if(s[0]) document.getElementById("sb-leader").innerHTML = `${s[0].nick} <small>${nf(s[0].pts)}</small>`; }
@@ -665,7 +696,7 @@ function renderTournaments(list, target="tourns", opts={}){
     <div class="tourn">
       <div class="tourn-top">
         <span class="tourn-cat cat-${t.catCode}">${t.cat}</span>
-        <span class="tourn-name">${t.name}</span>
+        <span class="tourn-name">${tr(t.name)}</span>
         <span class="tourn-date">${t.date}</span>
       </div>
       ${t.teams.map(tm=>{
@@ -680,6 +711,37 @@ function renderTournaments(list, target="tourns", opts={}){
       }).join("")}
     </div>`).join("");
 }
+/* points breakdown: two-row header (months spanning + sub-codes), like the sheet */
+function renderBreakdown(csvText, targetId){
+  const el=document.getElementById(targetId); if(!el) return;
+  if(!csvText){ el.innerHTML=""; return; }
+  const rows=Papa.parse(csvText,{skipEmptyLines:false}).data.map(r=>r.map(c=>(c==null?"":String(c)).trim()));
+  const mIdx=rows.findIndex(r=>r.some(c=>normHeader(c)==="takmicar"));
+  if(mIdx<0){ renderSheetTable(csvText,targetId); return; }
+  const monthRow=rows[mIdx], subRow=rows[mIdx+1]||[];
+  const ncol=Math.max(monthRow.length, subRow.length, ...rows.slice(mIdx+2).map(r=>r.length));
+  let lastCol=monthRow.findIndex(c=>c==="\u03a3"||normHeader(c)==="\u03c3");
+  if(lastCol<0) lastCol=ncol-1;
+  const groups=[]; let c=2;
+  while(c<lastCol){
+    let span=1, d=c+1;
+    while(d<lastCol && !monthRow[d]){ span++; d++; }
+    groups.push({label:monthRow[c]||"", start:c, span}); c=d;
+  }
+  const palette=6;
+  const trMonth = `<th rowspan="2" class="bd-fix">${tr(monthRow[0]||"Rank")}</th>`
+    + `<th rowspan="2" class="bd-name">${tr(monthRow[1]||"Player")}</th>`
+    + groups.map((g,i)=>`<th colspan="${g.span}" class="bd-month bd-m${i%palette}">${tr(g.label)}</th>`).join("")
+    + `<th rowspan="2" class="bd-fix bd-total-h">\u03a3</th>`;
+  const trSub = groups.map(g=>{ let out=""; for(let k=g.start;k<g.start+g.span;k++) out+=`<th class="bd-sub">${tr(subRow[k]||"")}</th>`; return out; }).join("");
+  const body=rows.slice(mIdx+2).filter(r=>r.some(x=>x)).map(r=>{
+    let cells=`<td class="bd-fix">${r[0]||""}</td><td class="bd-name">${r[1]||""}</td>`;
+    for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++) cells+=`<td>${r[k]||""}</td>`; }
+    cells+=`<td class="bd-total">${r[lastCol]||""}</td>`;
+    return `<tr>${cells}</tr>`;
+  }).join("");
+  el.innerHTML=`<table class="raw breakdown"><thead><tr>${trMonth}</tr><tr>${trSub}</tr></thead><tbody>${body}</tbody></table>`;
+}
 /* generic renderer: shows an entire tab (used for the scoring / bodovanje tab) */
 function renderSheetTable(csvText, targetId){
   const el = document.getElementById(targetId); if(!el) return;
@@ -693,8 +755,8 @@ function renderSheetTable(csvText, targetId){
   const looksSub = h2.length && h2.some((c,i)=>c && !h1[i]) && h2.filter(x=>x).length>=2;
   const headers=[]; for(let i=0;i<ncol;i++) headers.push(looksSub ? (h1[i]||h2[i]||"") : (h1[i]||""));
   const body = rows.slice(looksSub ? start+2 : start+1);
-  el.innerHTML = `<table class="raw"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${
-    body.map(r=>`<tr>${headers.map((_,i)=>`<td>${r[i]||""}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+  el.innerHTML = `<table class="raw"><thead><tr>${headers.map(h=>`<th>${tr(h)}</th>`).join("")}</tr></thead><tbody>${
+    body.map(r=>`<tr>${headers.map((_,i)=>`<td>${tr(r[i]||"")}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
 /* ---------- LIVE: read the standings feed and show the ranking ----------
@@ -1016,7 +1078,7 @@ async function loadSeason(year){
   }
   const rows = applyTournamentStats(data.standings, data.tournaments);
   renderStandings(rows, "sp-standings");
-  renderSheetTable(data.rawStandings, "sp-breakdown");
+  renderBreakdown(data.rawStandings, "sp-breakdown");
   renderScorers(data.scorers||[], "sp-scorers", {date:true});
   renderTournaments(data.tournaments||[], "sp-tourns", {detailed:true});
   renderSheetTable(data.rawScoring, "sp-scoring");
