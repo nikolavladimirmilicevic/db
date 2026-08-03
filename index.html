@@ -379,6 +379,38 @@ const GID = { table:"1388852135", tournaments:"2032154872", scorers:"1786756482"
    (the plain gviz endpoint does not, which is why the site must use this one). */
 const csvUrl = gid => `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pub?gid=${gid}&single=true&output=csv`;
 
+/* Read the published sheet's own tab list so the app resolves every feed by
+   TAB NAME (26ta, 26i, 25i, Večna Lista ...) instead of relying on fixed gids. */
+const PUBHTML = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pubhtml`;
+let SHEETS = null;
+async function getSheetMap(){
+  if(SHEETS) return SHEETS;
+  SHEETS = {};
+  try{
+    const res = await fetch(PUBHTML, {mode:"cors"});
+    const html = await res.text();
+    try{
+      const doc = new DOMParser().parseFromString(html, "text/html");
+      doc.querySelectorAll('li[id^="sheet-button-"]').forEach(li=>{
+        const m = (li.id||"").match(/sheet-button-(\d+)/);
+        const name = (li.textContent||"").trim();
+        if(m && name) SHEETS[name] = m[1];
+      });
+    }catch(e){}
+    if(!Object.keys(SHEETS).length){
+      const re = /id="sheet-button-(\d+)"[^>]*>\s*(?:<a[^>]*>)?\s*([^<]+?)\s*</g;
+      let mm; while((mm = re.exec(html))){ if(mm[2].trim()) SHEETS[mm[2].trim()] = mm[1]; }
+    }
+  }catch(e){}
+  return SHEETS;
+}
+function tabGid(name){
+  if(!SHEETS) return null;
+  const want = normHeader(name);
+  for(const k in SHEETS){ if(normHeader(k)===want) return SHEETS[k]; }
+  return null;
+}
+
 /* ---------- kit colors per player ---------- */
 const KITS = {
   "Nino":"var(--cyan)", "Mili":"var(--silver)", "Golranče":"var(--steel)",
@@ -651,14 +683,14 @@ function applyTournamentStats(standings, tournaments){
 let _tournamentsPromise = null;
 function loadTournaments(){
   if(!_tournamentsPromise){
-    _tournamentsPromise = fetch(csvUrl(GID.tournaments), {mode:"cors"})
+    _tournamentsPromise = fetch(csvUrl(tabGid("26tu") || GID.tournaments), {mode:"cors"})
       .then(r => r.ok ? r.text() : Promise.reject(new Error("tournaments unavailable")))
       .then(txt => parse26tu(txt));
   }
   return _tournamentsPromise;
 }
 async function tryLiveTable(){
-  const res = await fetch(csvUrl(GID.table), {mode:"cors"});
+  const res = await fetch(csvUrl(tabGid("26ta") || GID.table), {mode:"cors"});
   if(!res.ok) throw new Error("table unavailable");
   const base = parse26ta(await res.text());
   if(!base.length) throw new Error("no rows parsed");
@@ -706,7 +738,7 @@ function parse26i(csvText){
   return out.sort((a,b)=>b.tot-a.tot);
 }
 async function tryLiveScorers(){
-  const res = await fetch(csvUrl(GID.scorers), {mode:"cors"});
+  const res = await fetch(csvUrl(tabGid("26i") || GID.scorers), {mode:"cors"});
   if(!res.ok) throw new Error("scorers unavailable");
   const list = parse26i(await res.text());
   if(!list.length) throw new Error("no performances");
@@ -782,7 +814,7 @@ function championsFromVecna(data){
   return champs;
 }
 async function tryLiveVecna(){
-  const res = await fetch(csvUrl(GID.vecna), {mode:"cors"});
+  const res = await fetch(csvUrl(tabGid("Večna Lista") || GID.vecna), {mode:"cors"});
   if(!res.ok) throw new Error("vecna unavailable");
   const data = parseVecna(await res.text());
   if(!data.rows.length) throw new Error("no rows");
@@ -797,27 +829,21 @@ async function tryLiveVecna(){
 /* For each completed season, the scorers tab is one of two middle tabs
    (older seasons order them ta, tu, i, b; 2026 orders ta, i, tu, b).
    Try both candidate gids and use whichever actually parses as a scorers tab. */
-const POTS_GID = {
-  2025: ["1951291892","158409025"],
-  2024: ["594423722","1748337977"],
-  2023: ["1833206681","267862956"],
-  2022: ["1395917262","934274190"],
-  2021: ["1005506799","1401607330"]
-};
 async function tryLivePOTS(){
-  for(const y of Object.keys(POTS_GID)){
-    for(const gid of POTS_GID[y]){
-      try{
-        const res = await fetch(csvUrl(gid), {mode:"cors"});
-        if(!res.ok) continue;
-        const list = parse26i(await res.text());   // throws if this tab has no scorers header
-        if(!list.length) continue;
-        const top = list[0];
-        const h = HONOURS.find(x=>x.yr == y);
-        if(h){ h.pots = top.by ? `${top.player} (${top.by})` : top.player; renderHonours(); }
-        break;   // found the scorers tab for this season
-      }catch(e){ /* wrong tab, try the next candidate */ }
-    }
+  /* Player of the Season = first name on each completed season's scorers tab,
+     found by tab name (25i, 24i, ...). Seasons without such a tab are skipped. */
+  for(const h of HONOURS){
+    const g = tabGid(String(h.yr).slice(-2) + "i");
+    if(!g) continue;
+    try{
+      const res = await fetch(csvUrl(g), {mode:"cors"});
+      if(!res.ok) continue;
+      const list = parse26i(await res.text());
+      if(!list.length) continue;
+      const top = list[0];
+      h.pots = top.by ? `${top.player} (${top.by})` : top.player;
+      renderHonours();
+    }catch(e){}
   }
 }
 
@@ -841,11 +867,14 @@ renderHonours();
 /* then try live, each part independent and quiet on failure.
    Main sections first; Player of the Season is deferred so it never
    competes with the larger feeds for the first, most important requests. */
-tryLiveTable().catch(()=>console.info("Standings not loaded, showing last snapshot."));
-tryLiveTournaments().catch(()=>console.info("Tournaments not loaded, showing last snapshot."));
-tryLiveScorers().catch(()=>console.info("Performances not loaded, showing last snapshot."));
-tryLiveVecna().catch(()=>console.info("All-time not loaded, showing last snapshot."));
-setTimeout(()=>{ tryLivePOTS().catch(()=>console.info("Player of the Season not loaded.")); }, 1200);
+(async function loadLive(){
+  await getSheetMap();   // resolve tab names -> gids from the published sheet
+  tryLiveTable().catch(()=>console.info("Standings not loaded, showing last snapshot."));
+  tryLiveTournaments().catch(()=>console.info("Tournaments not loaded, showing last snapshot."));
+  tryLiveScorers().catch(()=>console.info("Performances not loaded, showing last snapshot."));
+  tryLiveVecna().catch(()=>console.info("All-time not loaded, showing last snapshot."));
+  setTimeout(()=>{ tryLivePOTS().catch(()=>console.info("Player of the Season not loaded.")); }, 400);
+})();
 
 /* reveal on scroll */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("in")}),{threshold:.08});
