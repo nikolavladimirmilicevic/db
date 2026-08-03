@@ -387,9 +387,9 @@ const KITS = {
    Live, these are read straight from the tab, since the source already provides totals. */
 const SAMPLE_STANDINGS = [
   {pos:1, nick:"Nino",     kit:KITS["Nino"],     ttl:7,  fin:6, sf:7, pts:10593, form:[5,2,1,1,2]},
-  {pos:2, nick:"Mili",     kit:KITS["Mili"],     ttl:15, fin:7, sf:3, pts:10380, form:[1,5,1,1,7]},
+  {pos:2, nick:"Mili",     kit:KITS["Mili"],     ttl:15, fin:7, sf:6, pts:10380, form:[1,5,1,1,7]},
   {pos:3, nick:"Golranče", kit:KITS["Golranče"], ttl:10, fin:5, sf:5, pts:5843,  form:[5,2,3,7,2]},
-  {pos:4, nick:"Peđa",     kit:KITS["Peđa"],     ttl:0,  fin:1, sf:1, pts:514,   form:[8,8,6,6,7]}
+  {pos:4, nick:"Peđa",     kit:KITS["Peđa"],     ttl:0,  fin:1, sf:3, pts:514,   form:[8,8,6,6,7]}
 ];
 
 /* real top single-game hauls from the performances feed (goals + assists) */
@@ -482,7 +482,7 @@ function setLeader(s){ if(s[0]) document.getElementById("sb-leader").innerHTML =
 function renderStandings(rows){
   document.getElementById("standings").innerHTML = rows.map(r=>{
     const form = r.form.map(p=>{
-      const cls = p===1?'f-t':p===2?'f-f':p===3?'f-s':'f-x';
+      const cls = p===1?'f-t':p===2?'f-f':(p===3||p===4)?'f-s':'f-x';
       return `<span class="${cls}">${p}</span>`;
     }).join("");
     return `<tr>
@@ -625,7 +625,7 @@ function tournamentStats(tournaments){
   asc.forEach(t => t.teams.forEach(tm => {
     (tm.by||"").split(" + ").map(x=>x.trim()).filter(Boolean).forEach(n => {
       const p = ensure(n);
-      if(tm.place===1) p.ttl++; else if(tm.place===2) p.fin++; else if(tm.place===3) p.sf++;
+      if(tm.place===1) p.ttl++; else if(tm.place===2) p.fin++; else if(tm.place===3||tm.place===4) p.sf++;
       if(tm.place!=null) p.seq.push(tm.place);
     });
   }));
