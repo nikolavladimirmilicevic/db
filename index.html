@@ -241,6 +241,17 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .card-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .card-photo::after{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(to bottom,transparent,var(--surface-2));pointer-events:none}
 .card-body{padding:16px 22px 20px}
+.gallery-grid{column-count:4;column-gap:14px}
+@media(max-width:1000px){.gallery-grid{column-count:3}}
+@media(max-width:680px){.gallery-grid{column-count:2}}
+@media(max-width:430px){.gallery-grid{column-count:1}}
+.gallery-item{break-inside:avoid;margin:0 0 14px;border-radius:12px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in;position:relative;background:var(--surface)}
+.gallery-item img{width:100%;display:block;transition:transform .45s ease}
+.gallery-item:hover img{transform:scale(1.05)}
+.gallery-empty{color:var(--muted);font-size:14px;font-style:italic}
+#lightbox{position:fixed;inset:0;z-index:100;background:rgba(20,16,45,.93);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+#lightbox.open{display:flex}
+#lightbox img{max-width:95vw;max-height:92vh;border-radius:10px;box-shadow:0 30px 90px -20px rgba(0,0,0,.85)}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -274,6 +285,7 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
       <a href="#tournaments">Tournaments</a>
       <a href="#alltime">All-Time</a>
       <a href="#history">History</a>
+      <a href="#gallery">Gallery</a>
       <a href="#gallery">Gallery</a>
     </nav>
   </div>
@@ -389,7 +401,20 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
   </div>
   <div class="honours" id="honours"></div>
 </section>
+
+<section id="gallery" class="wrap reveal">
+  <div class="sec-head">
+    <div>
+      <div class="idx">06 / GALLERY</div>
+      <h2>Gallery</h2>
+    </div>
+    <p>Moments from the crew, shuffled fresh on every visit.</p>
+  </div>
+  <div class="gallery-grid" id="gallery-grid"></div>
+</section>
 </div>
+
+<div id="lightbox"><img src="" alt=""></div>
 
 <div id="season-page" hidden>
   <div class="hero season-hero">
@@ -436,7 +461,7 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
   </section>
 </div>
 
-<footer id="gallery">
+<footer id="site-footer">
   <div class="wrap">
     <img class="foot-pic" src="data:image/png;base64,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" alt="">
     <div>
@@ -1088,6 +1113,36 @@ tryLiveTournaments().catch(()=>console.info("Tournaments not loaded, showing las
 tryLiveScorers().catch(()=>console.info("Performances not loaded, showing last snapshot."));
 tryLiveVecna().catch(()=>console.info("All-time not loaded, showing last snapshot."));
 setTimeout(()=>{ tryLivePOTS().catch(()=>console.info("Player of the Season not loaded.")); }, 400);
+
+
+/* ---------- gallery: auto-read the /pics folder from the repo ---------- */
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function openLightbox(src){ const lb=document.getElementById("lightbox"); lb.querySelector("img").src=src; lb.classList.add("open"); }
+function closeLightbox(){ const lb=document.getElementById("lightbox"); lb.classList.remove("open"); lb.querySelector("img").src=""; }
+async function loadGallery(){
+  const grid=document.getElementById("gallery-grid"); if(!grid) return;
+  let files=[];
+  try{
+    const host=location.hostname;
+    const parts=location.pathname.split("/").filter(Boolean);
+    if(/\.github\.io$/i.test(host)){
+      const user=host.split(".")[0];
+      const repo=parts[0] || `${user}.github.io`;
+      const res=await fetch(`https://api.github.com/repos/${user}/${repo}/contents/pics`);
+      if(res.ok){
+        const data=await res.json();
+        files=data.filter(x=>x.type==="file" && /\.(jpe?g|png|gif|webp|avif)$/i.test(x.name))
+                  .map(x=>"pics/"+x.name.split("/").map(encodeURIComponent).join("/"));
+      }
+    }
+  }catch(e){}
+  if(!files.length){ grid.innerHTML='<p class="gallery-empty">The gallery fills in automatically once the site is live.</p>'; return; }
+  grid.innerHTML=shuffle(files).map(src=>`<div class="gallery-item"><img src="${src}" alt="" loading="lazy"></div>`).join("");
+  grid.addEventListener("click",e=>{ const img=e.target.closest("img"); if(img) openLightbox(img.src); });
+}
+document.getElementById("lightbox").addEventListener("click", closeLightbox);
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeLightbox(); });
+loadGallery();
 
 /* reveal on scroll */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("in")}),{threshold:.08});
