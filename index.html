@@ -422,7 +422,7 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
       </div>
     </div>
   </div>
-  <section class="wrap">
+  <section class="wrap" id="sec-standings">
     <div class="sec-head"><div><div class="idx">01 / FINAL TABLE</div><h2>Standings</h2></div></div>
     <div class="table-card">
       <table>
@@ -433,17 +433,21 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
     <div class="perf-head">Full points breakdown <span>every tournament and month, straight from the table</span></div>
     <div class="raw-wrap" id="sp-breakdown"></div>
   </section>
-  <section class="wrap">
+  <section class="wrap" id="sec-scorers">
     <div class="sec-head"><div><div class="idx">02 / SCORERS</div><h2>Top Performances</h2></div></div>
     <div class="table-card" id="sp-scorers"></div>
   </section>
-  <section class="wrap">
+  <section class="wrap" id="sec-tourns">
     <div class="sec-head"><div><div class="idx">03 / RESULTS</div><h2>Tournaments</h2></div></div>
     <div class="tourns" id="sp-tourns"></div>
   </section>
-  <section class="wrap">
+  <section class="wrap" id="sec-scoring">
     <div class="sec-head"><div><div class="idx">04 / SCORING</div><h2>Scoring &amp; Calendar</h2></div></div>
     <div class="raw-wrap" id="sp-scoring"></div>
+  </section>
+  <section class="wrap" id="sec-legacy" hidden>
+    <div class="sec-head"><div><div class="idx">SEASON</div><h2>Season Table</h2></div></div>
+    <div class="raw-wrap" id="sp-legacy"></div>
   </section>
 </div>
 
@@ -550,7 +554,8 @@ const SQUAD = [
 ];
 let CURRENT_PTS = {};
 const HONOURS = [
-  {yr:2025, champ:"Mili",  pots:"Erling Haaland (Golranče)", live:true},
+  {yr:2026, champ:"?", pots:"?", current:true},
+  {yr:2025, champ:"Mili",  pots:"Erling Haaland (Golranče)"},
   {yr:2024, champ:"Mili",  pots:"?"},
   {yr:2023, champ:"Mili",  pots:"?"},
   {yr:2022, champ:"Mili",  pots:"?"},
@@ -580,6 +585,7 @@ const VECNA = {
 
 /* season tab blocks (each season's four tabs, any order; type is auto-detected) */
 const SEASON_GIDS = {
+  2026: ["1388852135","1786756482","2032154872","2091593950"],
   2025: ["524448624","1951291892","158409025","222006103"],
   2024: ["1653159394","594423722","1748337977","357683424"],
   2023: ["888824251","1833206681","267862956","20642164"],
@@ -587,6 +593,7 @@ const SEASON_GIDS = {
   2021: ["1513973413","1005506799","1401607330","969172742"],
   2020: ["1895303171","0","176368166","606585396"]
 };
+const LEGACY_GID = { 2019:"1592260423", 2018:"1888339853" };
 
 /* Serbian -> English for anything read straight from the sheet.
    Keys are normalised (lowercase, no diacritics, no punctuation, single spaces). */
@@ -597,7 +604,7 @@ function normTr(t){
 const TR = {
   "rang":"Rank","takmicar":"Player","igrac":"Player",
   "termin":"Month","scenario":"Scenario","kategorija":"Category",
-  "ucesnici":"Participants","bodovanje":"Scoring",
+  "ucesnici":"Participants","broj ucesnika":"Participants","broj takmicara":"Competitors","bodovanje":"Scoring",
   "titula":"Title","finale":"Final","polufinale":"Semi-final",
   "datum":"Date","naziv":"Name","predlozio":"Proposed by",
   "tim":"Team","zvezdice":"Stars","prosek":"Average",
@@ -627,7 +634,7 @@ const TR_WORDS = {
   "svaki":"each","bod":"point","boda":"points","bodova":"points","grupi":"group","grupa":"group",
   "grupe":"group","za":"for","po":"per","svi":"all","svih":"all","takmicar":"competitor",
   "takmicari":"competitors","takmicara":"competitors","reprezentacije":"national teams",
-  "reprezentacija":"national team","pobednik":"winner","finalista":"finalist","mesec":"month"
+  "reprezentacija":"national team","pobednik":"winner","finalista":"finalist","polufinalista":"semi-finalist","broj":"Number","ucesnika":"participants","ucesnik":"participant","grupna":"group","faza":"stage","runda":"round","kolo":"round","sezona":"season","sezone":"season","nedelja":"week","mesec":"month"
 };
 function tr(text){
   if(text==null) return text;
@@ -723,15 +730,17 @@ function renderSquad(){
 }
 function renderHonours(){
   document.getElementById("honours").innerHTML = HONOURS.map(h=>{
-    const on = !!SEASON_GIDS[h.yr];
+    const on = !!(SEASON_GIDS[h.yr] || LEGACY_GID[h.yr]);
     const tag = on ? "a" : "div";
     const href = on ? ` href="#season-${h.yr}"` : "";
+    const champLabel = h.current ? "Leader" : "Champion";
+    const potsLabel  = h.current ? "Top performer" : "Player of the Season";
     return `
-    <${tag} class="year ${h.live?'live':''} ${on?'clickable':''}"${href}>
-      ${h.live?'<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>':''}
+    <${tag} class="year ${h.current?'live':''} ${on?'clickable':''}"${href}>
+      ${h.current?'<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>':''}
       <div class="yr">${h.yr}</div>
-      <div class="row"><div class="k">Champion</div><div class="v">${h.champ}</div></div>
-      <div class="row"><div class="k">Player of the Season</div><div class="v">${h.pots}</div></div>
+      <div class="row"><div class="k">${champLabel}</div><div class="v">${h.champ}</div></div>
+      <div class="row"><div class="k">${potsLabel}</div><div class="v">${h.pots}</div></div>
     </${tag}>`;
   }).join("");
 }
@@ -896,6 +905,7 @@ async function tryLiveTable(){
   const rows = applyTournamentStats(base, tournaments);
   renderStandings(rows); setLeader(rows);
   CURRENT_PTS = {}; rows.forEach(r => CURRENT_PTS[r.nick] = r.pts); renderSquad();
+  const hC = HONOURS.find(x=>x.yr===2026); if(hC && rows[0]){ hC.champ = rows[0].nick; renderHonours(); }
 }
 
 /* ---------- LIVE: top performances from the performances feed ---------- */
@@ -946,6 +956,7 @@ async function tryLiveScorers(){
   const topAssists = [...list].sort((a,b)=>b.a-a.a)[0];
   if(topGoals)   document.getElementById("sb-scorer").innerHTML = `${surname(topGoals)} <small>${topGoals.g}</small>`;
   if(topAssists) document.getElementById("sb-assist").innerHTML = `${surname(topAssists)} <small>${topAssists.a}</small>`;
+  const hC = HONOURS.find(x=>x.yr===2026); if(hC && list[0]){ hC.pots = list[0].by ? `${list[0].player} (${list[0].by})` : list[0].player; renderHonours(); }
 }
 
 /* ---------- LIVE: tournament archive from the tournaments feed ----------
@@ -1147,6 +1158,13 @@ function classifyTab(text){
 }
 const _seasonCache = {};
 async function loadSeason(year){
+  if(LEGACY_GID[year]){
+    try{
+      const res = await fetch(csvUrl(LEGACY_GID[year]), {mode:"cors"});
+      if(res.ok) renderSheetTable(await res.text(), "sp-legacy");
+    }catch(e){}
+    return;
+  }
   const gids = SEASON_GIDS[year]; if(!gids) return;
   let data = _seasonCache[year];
   if(!data){
@@ -1176,14 +1194,18 @@ async function loadSeason(year){
   document.getElementById("sp-pots").textContent = top ? (top.by ? `${top.player} (${top.by})` : top.player) : "-";
 }
 function showSeason(year){
+  const legacy = !!LEGACY_GID[year];
   document.getElementById("home").hidden = true;
   document.getElementById("season-page").hidden = false;
   document.getElementById("sp-year").textContent = "Season " + year;
   document.getElementById("sp-title").textContent = year;
   window.scrollTo(0,0);
-  ["sp-standings","sp-breakdown","sp-scorers","sp-tourns","sp-scoring"].forEach(id=>document.getElementById(id).innerHTML="");
-  document.getElementById("sp-champ").textContent = "\u2014";
-  document.getElementById("sp-pots").textContent = "\u2014";
+  ["sec-standings","sec-scorers","sec-tourns","sec-scoring"].forEach(id=>document.getElementById(id).hidden = legacy);
+  document.getElementById("sec-legacy").hidden = !legacy;
+  ["sp-standings","sp-breakdown","sp-scorers","sp-tourns","sp-scoring","sp-legacy"].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=""; });
+  const h = HONOURS.find(x=>x.yr == year);
+  document.getElementById("sp-champ").textContent = (h && h.champ && h.champ!=="?") ? h.champ : "-";
+  document.getElementById("sp-pots").textContent  = (h && h.pots  && h.pots!=="?")  ? h.pots  : "-";
   loadSeason(year).catch(()=>console.info("Season "+year+" not loaded."));
 }
 function routeSeason(){
