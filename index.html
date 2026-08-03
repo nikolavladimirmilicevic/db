@@ -131,8 +131,6 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .card.pots .card-top .role{display:none}
 
 .honours{display:flex;gap:14px;overflow-x:auto;padding-bottom:14px;scroll-snap-type:x mandatory}
-.honours::-webkit-scrollbar{height:6px}
-.honours::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 .year{flex:none;width:210px;scroll-snap-align:start;border:1px solid var(--line);border-radius:14px;padding:20px;background:var(--surface);position:relative}
 .year.live{border-color:rgba(0,184,232,.4);background:linear-gradient(180deg,rgba(0,184,232,.07),var(--surface))}
 .year .yr{font-family:'Nunito',sans-serif;font-weight:900;font-size:34px;color:var(--muted)}
@@ -222,10 +220,16 @@ a.year{text-decoration:none;color:inherit;display:block}
 .perf-date-c{font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted);white-space:nowrap}
 .raw-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
 table.raw{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
-table.raw th{font-family:'Nunito',sans-serif;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.07em;color:var(--muted);text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.raw th{font-family:'Nunito',sans-serif;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.07em;color:var(--muted);text-align:center;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.raw td{padding:9px 12px;border-bottom:1px solid rgba(170,160,220,.06);white-space:nowrap;color:var(--white)}
 table.raw tbody tr:last-child td{border-bottom:none}
 table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
+/* discreet scrollbars */
+.raw-wrap,.alltime-wrap,.honours{scrollbar-width:thin;scrollbar-color:rgba(170,160,220,.28) transparent}
+.raw-wrap::-webkit-scrollbar,.alltime-wrap::-webkit-scrollbar,.honours::-webkit-scrollbar{height:8px;width:8px}
+.raw-wrap::-webkit-scrollbar-track,.alltime-wrap::-webkit-scrollbar-track,.honours::-webkit-scrollbar-track{background:transparent}
+.raw-wrap::-webkit-scrollbar-thumb,.alltime-wrap::-webkit-scrollbar-thumb,.honours::-webkit-scrollbar-thumb{background:rgba(170,160,220,.22);border-radius:5px;border:2px solid transparent;background-clip:padding-box}
+.raw-wrap::-webkit-scrollbar-thumb:hover,.alltime-wrap::-webkit-scrollbar-thumb:hover,.honours::-webkit-scrollbar-thumb:hover{background:rgba(170,160,220,.4);background-clip:padding-box}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
