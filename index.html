@@ -922,6 +922,63 @@ document.querySelectorAll(".reveal").forEach((el,i)=>{el.style.transitionDelay=(
 /* safety net: if the observer ever misses on a device, reveal everything anyway */
 setTimeout(()=>document.querySelectorAll(".reveal").forEach(el=>el.classList.add("in")), 1600);
 
+/* ---------- per-season pages ---------- */
+function classifyTab(text){
+  const rows = Papa.parse(text, {skipEmptyLines:false}).data;
+  const has = name => rows.some(r => r.some(c => normHeader(c)===normHeader(name)));
+  if(has("Igrac")) return "scorers";
+  if(has("Naziv") && has("Datum")) return "tournaments";
+  if(has("Takmičar")) return "standings";
+  return "scoring";
+}
+const _seasonCache = {};
+async function loadSeason(year){
+  const gids = SEASON_GIDS[year]; if(!gids) return;
+  let data = _seasonCache[year];
+  if(!data){
+    data = { standings:[], scorers:[], tournaments:[] };
+    await Promise.all(gids.map(async gid => {
+      try{
+        const res = await fetch(csvUrl(gid), {mode:"cors"});
+        if(!res.ok) return;
+        const text = await res.text();
+        const kind = classifyTab(text);
+        if(kind==="standings")        data.standings   = parse26ta(text);
+        else if(kind==="scorers")     data.scorers     = parse26i(text);
+        else if(kind==="tournaments") data.tournaments = parse26tu(text);
+      }catch(e){}
+    }));
+    _seasonCache[year] = data;
+  }
+  const rows = applyTournamentStats(data.standings, data.tournaments);
+  renderStandings(rows, "sp-standings");
+  renderScorers((data.scorers||[]).slice(0,5), "sp-scorers");
+  renderTournaments(data.tournaments||[], "sp-tourns");
+  document.getElementById("sp-champ").textContent = rows[0] ? rows[0].nick : "-";
+  const top = (data.scorers||[])[0];
+  document.getElementById("sp-pots").textContent = top ? (top.by ? `${top.player} (${top.by})` : top.player) : "-";
+}
+function showSeason(year){
+  document.getElementById("home").hidden = true;
+  document.getElementById("season-page").hidden = false;
+  document.getElementById("sp-year").textContent = "Season " + year;
+  document.getElementById("sp-title").textContent = year;
+  window.scrollTo(0,0);
+  document.getElementById("sp-standings").innerHTML = "";
+  document.getElementById("sp-scorers").innerHTML = "";
+  document.getElementById("sp-tourns").innerHTML = "";
+  document.getElementById("sp-champ").textContent = "\u2014";
+  document.getElementById("sp-pots").textContent = "\u2014";
+  loadSeason(year).catch(()=>console.info("Season "+year+" not loaded."));
+}
+function routeSeason(){
+  const m = (location.hash||"").match(/season-(\d{4})/);
+  if(m && SEASON_GIDS[m[1]]){ showSeason(parseInt(m[1],10)); }
+  else { document.getElementById("home").hidden = false; document.getElementById("season-page").hidden = true; }
+}
+window.addEventListener("hashchange", routeSeason);
+routeSeason();
+
 /* subtle card tilt */
 if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
   document.addEventListener("mousemove",e=>{
