@@ -11,19 +11,21 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
 :root{
-  --ink:#06100f;
-  --ink-2:#0a1614;
-  --surface:#0f1f1c;
-  --surface-2:#152e2a;
-  --line:rgba(170,160,220,.13);
-  --white:#eef6f4;
-  --muted:#7e9791;
-  --silver:#c2d2ce;
-  --teal:#12c2b6;
-  --teal-2:#33e6d8;
-  --teal-deep:#0b8d83;
-  --steel:#5f8fa6;
-  --shadow:0 24px 60px -30px rgba(0,0,0,.85);
+  --ink:#201b45;
+  --ink-2:#2a2358;
+  --surface:#322a68;
+  --surface-2:#3d3479;
+  --line:rgba(170,160,220,.16);
+  --white:#f4f3fc;
+  --muted:#a49dcf;
+  --silver:#cfcbe9;
+  --cyan:#00b8e8;
+  --cyan-2:#43cdf3;
+  --cyan-deep:#0090ba;
+  --purple:#6060c8;
+  --purple-2:#8686de;
+  --steel:#6f7bc4;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.6);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -112,7 +114,7 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .ovr .n{font-family:'Nunito',sans-serif;font-weight:900;font-size:46px;letter-spacing:-.02em}
 .ovr .l{font-family:'Nunito',sans-serif;font-size:9px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase}
 .role{font-family:'Nunito',sans-serif;font-size:10px;letter-spacing:.1em;padding:5px 10px;border:1px solid var(--line);border-radius:6px;color:var(--cyan-2);text-transform:uppercase}
-.card .who{margin-top:18px}
+.card .who{margin-top:0}
 .card .who .nick{font-family:'Nunito',sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;letter-spacing:.01em}
 .card .who .title{font-size:12.5px;color:var(--muted);margin-top:2px;font-style:italic}
 .attrs{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}
@@ -186,12 +188,12 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
 .alltime tbody tr:last-child td{border-bottom:none}
 .alltime td.pl{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;text-align:left;padding-left:20px;white-space:nowrap}
 .alltime td.tt{font-family:'Nunito',sans-serif;font-weight:900;color:var(--cyan-2);font-size:14px}
-.cell{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:6px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700}
-.c1{background:var(--cyan);color:#06283a}
-.c2{background:var(--purple);color:#fff}
-.c3{background:rgba(0,184,232,.30);color:var(--white)}
-.cmid{background:rgba(170,160,220,.12);color:var(--muted)}
-.clow{background:rgba(170,160,220,.05);color:rgba(150,142,195,.55)}
+.cell{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800}
+.c1{background:var(--cyan-2);color:#04202c;font-weight:800}
+.c2{background:var(--purple);color:#fff;font-weight:800}
+.c3{background:rgba(0,184,232,.34);color:#eafcff}
+.cmid{background:rgba(170,160,220,.18);color:#cbc4ea}
+.clow{background:rgba(170,160,220,.07);color:rgba(202,196,232,.55)}
 .empty{background:transparent}
 .alltime-key{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted)}
 .alltime-key span{display:inline-flex;align-items:center;gap:7px}
@@ -307,7 +309,7 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
       <div class="idx">02 / SQUAD</div>
       <h2>The Squad</h2>
     </div>
-    <p>The crew, their honours and current form. The reigning Player of the Season gets the foil card.</p>
+    <p>The crew, ranked by honours and current form.</p>
   </div>
   <div class="squad" id="squad-grid"></div>
 </section>
@@ -333,11 +335,11 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
   </div>
   <div class="alltime-wrap"><table class="alltime" id="alltime-table"></table></div>
   <div class="alltime-key">
-    <span><i style="background:var(--cyan)"></i> Champion</span>
+    <span><i style="background:var(--cyan-2)"></i> Champion</span>
     <span><i style="background:var(--purple)"></i> Runner-up</span>
-    <span><i style="background:rgba(0,184,232,.30)"></i> Podium</span>
-    <span><i style="background:rgba(170,160,220,.12)"></i> 4th to 6th</span>
-    <span><i style="background:rgba(170,160,220,.05)"></i> 7th+</span>
+    <span><i style="background:rgba(0,184,232,.34)"></i> Podium</span>
+    <span><i style="background:rgba(170,160,220,.18)"></i> 4th to 6th</span>
+    <span><i style="background:rgba(170,160,220,.07)"></i> 7th+</span>
   </div>
 </section>
 
@@ -440,7 +442,7 @@ const SAMPLE_TOURNAMENTS = [
 ];
 
 const SQUAD = [
-  {nick:"Golranče", title:"The Venetian Merchant", kit:"var(--steel)",     pots:true},
+  {nick:"Golranče", title:"The Venetian Merchant", kit:"var(--steel)"},
   {nick:"Mili",     title:"The Gaffer",            kit:"var(--silver)"},
   {nick:"Peđa",     title:"The Algorithmist",      kit:"#8ea0da"},
   {nick:"Nino",     title:"The Handler",           kit:"var(--cyan)"},
@@ -524,12 +526,18 @@ function squadStats(nick){
   return { titles, seasons, best, pts: CURRENT_PTS[nick] };
 }
 function renderSquad(){
-  document.getElementById("squad-grid").innerHTML = SQUAD.map(p=>{
-    const st = squadStats(p.nick);
-    const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
-    return `<div class="card ${p.pots?'pots':''}">
+  const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
+  const ranked = SQUAD.map(p => ({ ...p, _s: squadStats(p.nick) }))
+    .sort((a,b) =>
+      b._s.titles - a._s.titles ||
+      (b._s.pts||0) - (a._s.pts||0) ||
+      (a._s.best==null?99:a._s.best) - (b._s.best==null?99:b._s.best) ||
+      b._s.seasons - a._s.seasons
+    );
+  document.getElementById("squad-grid").innerHTML = ranked.map(p=>{
+    const st = p._s;
+    return `<div class="card">
       <span class="spine" style="background:${p.kit}"></span>
-      ${p.pots?'<span class="pots-badge">Player of the Season</span>':''}
       <div class="who"><div class="nick">${p.nick}</div><div class="title">${p.title}</div></div>
       <div class="squad-stats">
         ${cell(st.seasons, "Seasons")}
@@ -662,23 +670,38 @@ async function tryLiveTable(){
 }
 
 /* ---------- LIVE: top performances from the performances feed ---------- */
+function normHeader(str){
+  return (str==null?"":String(str)).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+}
 function parse26i(csvText){
   const rows = Papa.parse(csvText, {skipEmptyLines:false}).data;
   const clean = c => (c==null?"":String(c)).trim();
-  const hIdx = rows.findIndex(r => r.some(c => clean(c)==="Igrac"));
+  // header row = the one that contains the player column (Igrac / Igrač, any case)
+  const hIdx = rows.findIndex(r => r.some(c => normHeader(c)==="igrac"));
   if(hIdx < 0) throw new Error("no performances header");
-  const H = rows[hIdx].map(clean);
-  const idx = name => H.indexOf(name);
-  const c = { player:idx("Igrac"), club:idx("Tim"), t1:idx("Takmičar 1"), t2:idx("Takmičar 2"),
-              g:idx("Golovi"), a:idx("Asistencije"), tot:idx("Ukupno") };
+  const H = rows[hIdx];
+  const col = (...names) => {
+    const wanted = names.map(normHeader);
+    return H.findIndex(c => wanted.includes(normHeader(c)));
+  };
+  const c = {
+    player: col("Igrac"),
+    club:   col("Tim"),
+    t1:     col("Takmičar 1","Takmicar 1","Takmičar","Takmicar"),
+    t2:     col("Takmičar 2","Takmicar 2"),
+    g:      col("Golovi"),
+    a:      col("Asistencije","Asistencija"),
+    tot:    col("Ukupno")
+  };
   const out = [];
   for(let i=hIdx+1;i<rows.length;i++){
     const r = rows[i]; if(!r) continue;
     const player = clean(r[c.player]); if(!player) continue;
-    const by = [clean(r[c.t1]), clean(r[c.t2])].filter(Boolean).join(" + ");
-    out.push({ player, club:clean(r[c.club]), by,
-               g:parseInt(clean(r[c.g]),10)||0, a:parseInt(clean(r[c.a]),10)||0,
-               tot:parseInt(clean(r[c.tot]),10)||0 });
+    const by = [c.t1>=0?clean(r[c.t1]):"", c.t2>=0?clean(r[c.t2]):""].filter(Boolean).join(" + ");
+    out.push({ player, club:c.club>=0?clean(r[c.club]):"", by,
+               g:c.g>=0?parseInt(clean(r[c.g]),10)||0:0,
+               a:c.a>=0?parseInt(clean(r[c.a]),10)||0:0,
+               tot:c.tot>=0?parseInt(clean(r[c.tot]),10)||0:0 });
   }
   return out.sort((a,b)=>b.tot-a.tot);
 }
@@ -781,7 +804,7 @@ async function tryLivePOTS(){
       if(!list.length) continue;
       const top = list[0];
       const h = HONOURS.find(x=>x.yr == y);
-      if(h){ h.pots = `${top.player} (${top.by})`; renderHonours(); }
+      if(h){ h.pots = top.by ? `${top.player} (${top.by})` : top.player; renderHonours(); }
     }catch(e){}
   }
 }
