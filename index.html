@@ -206,6 +206,17 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
 .ss-n{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;color:var(--white);line-height:1}
 .ss-l{font-family:'Nunito',sans-serif;font-size:9.5px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;margin-top:5px}
 .card.pots .ss-n{color:var(--cyan-2)}
+.season-hero{padding:60px 0 34px}
+.back-link{display:inline-block;font-family:'Nunito',sans-serif;font-size:13px;color:var(--muted);margin-bottom:18px;text-decoration:none}
+.back-link:hover{color:var(--cyan-2)}
+.sp-title{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(44px,9vw,80px);line-height:.95;text-transform:uppercase;margin-top:6px}
+.sp-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:24px}
+.sp-card{border:1px solid var(--line);border-radius:12px;padding:14px 20px;background:var(--surface);min-width:150px}
+.sp-card .lab{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.sp-card .val{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px;margin-top:5px}
+a.year{text-decoration:none;color:inherit;display:block}
+.year.clickable{cursor:pointer;transition:transform .2s ease,border-color .2s ease}
+.year.clickable:hover{transform:translateY(-3px);border-color:var(--cyan)}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -244,6 +255,7 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
   </div>
 </header>
 
+<div id="home">
 <div class="hero">
   <svg class="arcs" viewBox="0 0 660 660" preserveAspectRatio="xMinYMin slice" aria-hidden="true">
     <g fill="none" stroke-width="16" stroke-linecap="round">
@@ -353,6 +365,44 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
   </div>
   <div class="honours" id="honours"></div>
 </section>
+</div>
+
+<div id="season-page" hidden>
+  <div class="hero season-hero">
+    <svg class="arcs" viewBox="0 0 660 660" preserveAspectRatio="xMinYMin slice" aria-hidden="true">
+      <g fill="none" stroke-width="16" stroke-linecap="round">
+        <circle cx="-30" cy="-30" r="400" stroke="var(--purple)"/>
+        <circle cx="-30" cy="-30" r="374" stroke="#8686de"/>
+        <circle cx="-30" cy="-30" r="348" stroke="var(--cyan)"/>
+        <circle cx="-30" cy="-30" r="322" stroke="#43cdf3"/>
+      </g>
+    </svg>
+    <div class="wrap">
+      <a class="back-link" href="#top">&larr; Home</a>
+      <div class="eyebrow"><span class="dot"></span> <span id="sp-year">Season</span></div>
+      <h2 class="sp-title" id="sp-title">Season</h2>
+      <div class="sp-meta">
+        <div class="sp-card"><div class="lab">Champion</div><div class="val" id="sp-champ">&mdash;</div></div>
+        <div class="sp-card"><div class="lab">Player of the Season</div><div class="val" id="sp-pots">&mdash;</div></div>
+      </div>
+    </div>
+  </div>
+  <section class="wrap">
+    <div class="sec-head"><div><div class="idx">01 / FINAL TABLE</div><h2>Standings</h2></div></div>
+    <div class="table-card">
+      <table>
+        <thead><tr><th>#</th><th class="name">Player</th><th class="hide">TTL</th><th class="hide">F</th><th class="hide">SF</th><th>PTS</th><th class="hide">Form</th></tr></thead>
+        <tbody id="sp-standings"></tbody>
+      </table>
+    </div>
+    <div class="perf-head">Top Performances <span>best single games by goals and assists</span></div>
+    <div class="table-card" id="sp-scorers"></div>
+  </section>
+  <section class="wrap">
+    <div class="sec-head"><div><div class="idx">02 / RESULTS</div><h2>Tournaments</h2></div></div>
+    <div class="tourns" id="sp-tourns"></div>
+  </section>
+</div>
 
 <footer id="gallery">
   <div class="wrap">
@@ -478,11 +528,21 @@ const VECNA = {
   ]
 };
 
+/* season tab blocks (each season's four tabs, any order; type is auto-detected) */
+const SEASON_GIDS = {
+  2025: ["524448624","1951291892","158409025","222006103"],
+  2024: ["1653159394","594423722","1748337977","357683424"],
+  2023: ["888824251","1833206681","267862956","20642164"],
+  2022: ["66499520","1395917262","934274190","285537155"],
+  2021: ["1513973413","1005506799","1401607330","969172742"],
+  2020: ["1895303171","0","176368166","606585396"]
+};
+
 /* ---------- render ---------- */
 const nf = n => n.toLocaleString('en-US');
 function setLeader(s){ if(s[0]) document.getElementById("sb-leader").innerHTML = `${s[0].nick} <small>${nf(s[0].pts)}</small>`; }
-function renderStandings(rows){
-  document.getElementById("standings").innerHTML = rows.map(r=>{
+function renderStandings(rows, target="standings"){
+  document.getElementById(target).innerHTML = rows.map(r=>{
     const form = r.form.map(p=>{
       const cls = p===1?'f-t':p===2?'f-f':(p===3||p===4)?'f-s':'f-x';
       return `<span class="${cls}">${p}</span>`;
@@ -498,7 +558,7 @@ function renderStandings(rows){
     </tr>`;
   }).join("");
 }
-function renderScorers(list){
+function renderScorers(list, target="scorers"){
   const body = list.map((s,i)=>`
     <tr>
       <td class="pos ${i===0?'p1':''}">${i+1}</td>
@@ -508,7 +568,7 @@ function renderScorers(list){
       <td class="hide">${s.a}</td>
       <td class="pts ${i===0?'p1':''}">${s.tot}</td>
     </tr>`).join("");
-  document.getElementById("scorers").innerHTML = `
+  document.getElementById(target).innerHTML = `
     <table class="perf">
       <thead><tr><th>#</th><th class="name">Player</th><th class="hide">By</th><th class="hide">G</th><th class="hide">A</th><th>&Sigma;</th></tr></thead>
       <tbody>${body}</tbody>
@@ -549,13 +609,18 @@ function renderSquad(){
   }).join("");
 }
 function renderHonours(){
-  document.getElementById("honours").innerHTML = HONOURS.map(h=>`
-    <div class="year ${h.live?'live':''}">
+  document.getElementById("honours").innerHTML = HONOURS.map(h=>{
+    const on = !!SEASON_GIDS[h.yr];
+    const tag = on ? "a" : "div";
+    const href = on ? ` href="#season-${h.yr}"` : "";
+    return `
+    <${tag} class="year ${h.live?'live':''} ${on?'clickable':''}"${href}>
       ${h.live?'<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>':''}
       <div class="yr">${h.yr}</div>
       <div class="row"><div class="k">Champion</div><div class="v">${h.champ}</div></div>
       <div class="row"><div class="k">Player of the Season</div><div class="v">${h.pots}</div></div>
-    </div>`).join("");
+    </${tag}>`;
+  }).join("");
 }
 function renderAllTime(data){
   const head = `<tr><th class="pl">Player</th><th>TTL</th>${data.seasons.map(y=>`<th>${y}</th>`).join("")}</tr>`;
@@ -571,9 +636,9 @@ function renderAllTime(data){
   document.getElementById("alltime-table").innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
 }
 function tournKey(d){ const p=(d||"").split(".").map(x=>parseInt(x,10)); return (p[2]||0)*10000+(p[1]||0)*100+(p[0]||0); }
-function renderTournaments(list){
+function renderTournaments(list, target="tourns"){
   const sorted = [...list].sort((a,b)=>tournKey(b.date)-tournKey(a.date));
-  document.getElementById("tourns").innerHTML = sorted.map(t=>`
+  document.getElementById(target).innerHTML = sorted.map(t=>`
     <div class="tourn">
       <div class="tourn-top">
         <span class="tourn-cat cat-${t.catCode}">${t.cat}</span>
