@@ -217,6 +217,15 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
 a.year{text-decoration:none;color:inherit;display:block}
 .year.clickable{cursor:pointer;transition:transform .2s ease,border-color .2s ease}
 .year.clickable:hover{transform:translateY(-3px);border-color:var(--cyan)}
+.tr-stars{font-family:'Nunito',sans-serif;font-size:11px;color:var(--cyan-2);font-weight:700}
+.tr-best{display:block;font-family:'Nunito',sans-serif;font-size:10.5px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.perf-date-c{font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted);white-space:nowrap}
+.raw-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
+table.raw{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+table.raw th{font-family:'Nunito',sans-serif;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.07em;color:var(--muted);text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.raw td{padding:9px 12px;border-bottom:1px solid rgba(170,160,220,.06);white-space:nowrap;color:var(--white)}
+table.raw tbody tr:last-child td{border-bottom:none}
+table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -395,12 +404,20 @@ a.year{text-decoration:none;color:inherit;display:block}
         <tbody id="sp-standings"></tbody>
       </table>
     </div>
-    <div class="perf-head">Top Performances <span>best single games by goals and assists</span></div>
+    <div class="perf-head">Full points breakdown <span>every tournament and month, straight from the table</span></div>
+    <div class="raw-wrap" id="sp-breakdown"></div>
+  </section>
+  <section class="wrap">
+    <div class="sec-head"><div><div class="idx">02 / SCORERS</div><h2>Top Performances</h2></div></div>
     <div class="table-card" id="sp-scorers"></div>
   </section>
   <section class="wrap">
-    <div class="sec-head"><div><div class="idx">02 / RESULTS</div><h2>Tournaments</h2></div></div>
+    <div class="sec-head"><div><div class="idx">03 / RESULTS</div><h2>Tournaments</h2></div></div>
     <div class="tourns" id="sp-tourns"></div>
+  </section>
+  <section class="wrap">
+    <div class="sec-head"><div><div class="idx">04 / SCORING</div><h2>Scoring &amp; Calendar</h2></div></div>
+    <div class="raw-wrap" id="sp-scoring"></div>
   </section>
 </div>
 
@@ -558,10 +575,12 @@ function renderStandings(rows, target="standings"){
     </tr>`;
   }).join("");
 }
-function renderScorers(list, target="scorers"){
+function renderScorers(list, target="scorers", opts={}){
+  const d = !!opts.date;
   const body = list.map((s,i)=>`
     <tr>
       <td class="pos ${i===0?'p1':''}">${i+1}</td>
+      ${d?`<td class="perf-date-c hide">${s.date||""}</td>`:""}
       <td class="perf-name"><span class="pn">${s.player}</span><span class="pc">${s.club}</span></td>
       <td class="perf-by hide">${s.by}</td>
       <td class="hide">${s.g}</td>
@@ -570,7 +589,7 @@ function renderScorers(list, target="scorers"){
     </tr>`).join("");
   document.getElementById(target).innerHTML = `
     <table class="perf">
-      <thead><tr><th>#</th><th class="name">Player</th><th class="hide">By</th><th class="hide">G</th><th class="hide">A</th><th>&Sigma;</th></tr></thead>
+      <thead><tr><th>#</th>${d?`<th class="hide">Date</th>`:""}<th class="name">Player</th><th class="hide">By</th><th class="hide">G</th><th class="hide">A</th><th>&Sigma;</th></tr></thead>
       <tbody>${body}</tbody>
     </table>`;
 }
@@ -636,7 +655,7 @@ function renderAllTime(data){
   document.getElementById("alltime-table").innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
 }
 function tournKey(d){ const p=(d||"").split(".").map(x=>parseInt(x,10)); return (p[2]||0)*10000+(p[1]||0)*100+(p[0]||0); }
-function renderTournaments(list, target="tourns"){
+function renderTournaments(list, target="tourns", opts={}){
   const sorted = [...list].sort((a,b)=>tournKey(b.date)-tournKey(a.date));
   document.getElementById(target).innerHTML = sorted.map(t=>`
     <div class="tourn">
@@ -645,13 +664,33 @@ function renderTournaments(list, target="tourns"){
         <span class="tourn-name">${t.name}</span>
         <span class="tourn-date">${t.date}</span>
       </div>
-      ${t.teams.map(tm=>`
-        <div class="tr">
+      ${t.teams.map(tm=>{
+        const stars = tm.stars ? ` <span class="tr-stars">${tm.stars}★</span>` : "";
+        const best = (opts.detailed && tm.best && tm.best.length)
+          ? `<span class="tr-best">${tm.best.map(b=>`${b.pos} ${b.name}${b.rating?` ${b.rating}`:""}`).join("  ·  ")}</span>` : "";
+        return `<div class="tr">
           <span class="tr-place ${tm.place===1?'p1':''}">${tm.place==null?'-':tm.place}</span>
-          <span class="tr-main"><span class="tr-club">${tm.club}</span><span class="tr-by">${tm.by}</span></span>
+          <span class="tr-main"><span class="tr-club">${tm.club}${stars}</span><span class="tr-by">${tm.by}</span>${best}</span>
           <span class="tr-pts ${tm.points?'':'zero'}">${tm.points?tm.points.toLocaleString('en-US'):'-'}</span>
-        </div>`).join("")}
+        </div>`;
+      }).join("")}
     </div>`).join("");
+}
+/* generic renderer: shows an entire tab (used for the scoring / bodovanje tab) */
+function renderSheetTable(csvText, targetId){
+  const el = document.getElementById(targetId); if(!el) return;
+  if(!csvText){ el.innerHTML=""; return; }
+  let rows = Papa.parse(csvText,{skipEmptyLines:false}).data.map(r=>r.map(c=>(c==null?"":String(c)).trim()));
+  rows = rows.filter(r=>r.some(x=>x));
+  let start=0; while(start<rows.length && rows[start].filter(x=>x).length<=1) start++;
+  if(start>=rows.length){ el.innerHTML=""; return; }
+  const ncol = Math.max(...rows.map(r=>r.length));
+  const h1 = rows[start], h2 = rows[start+1]||[];
+  const looksSub = h2.length && h2.some((c,i)=>c && !h1[i]) && h2.filter(x=>x).length>=2;
+  const headers=[]; for(let i=0;i<ncol;i++) headers.push(looksSub ? (h1[i]||h2[i]||"") : (h1[i]||""));
+  const body = rows.slice(looksSub ? start+2 : start+1);
+  el.innerHTML = `<table class="raw"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>${
+    body.map(r=>`<tr>${headers.map((_,i)=>`<td>${r[i]||""}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
 }
 
 /* ---------- LIVE: read the standings feed and show the ranking ----------
@@ -751,6 +790,7 @@ function parse26i(csvText){
   };
   const c = {
     player: col("Igrac"),
+    date:   col("Datum"),
     club:   col("Tim"),
     t1:     col("Takmičar 1","Takmicar 1","Takmičar","Takmicar"),
     t2:     col("Takmičar 2","Takmicar 2"),
@@ -763,7 +803,7 @@ function parse26i(csvText){
     const r = rows[i]; if(!r) continue;
     const player = clean(r[c.player]); if(!player) continue;
     const by = [c.t1>=0?clean(r[c.t1]):"", c.t2>=0?clean(r[c.t2]):""].filter(Boolean).join(" + ");
-    out.push({ player, club:c.club>=0?clean(r[c.club]):"", by,
+    out.push({ player, date:c.date>=0?clean(r[c.date]):"", club:c.club>=0?clean(r[c.club]):"", by,
                g:c.g>=0?parseInt(clean(r[c.g]),10)||0:0,
                a:c.a>=0?parseInt(clean(r[c.a]),10)||0:0,
                tot:c.tot>=0?parseInt(clean(r[c.tot]),10)||0:0 });
@@ -791,26 +831,45 @@ function parse26tu(csvText){
   const rows = Papa.parse(csvText, {skipEmptyLines:false}).data;
   const clean = c => (c==null?"":String(c)).trim();
   const catMap = { M:"Monthly", Q:"Quarterly", D:"Ad hoc", Y:"Annual" };
+  const isLabel = r => (r||[]).some(c => normHeader(c)==="naziv");
   const out = [];
   for(let i=0;i<rows.length;i++){
-    const r = rows[i] || [];
-    if(r.some(c => clean(c)==="Naziv")){
-      const info = rows[i+1] || [];
-      const name = clean(info[6]), date = clean(info[0]), cat = clean(info[16]);
-      const teams = []; let j = i+3;
-      for(; j<rows.length; j++){
-        const tr = rows[j] || [];
-        if(clean(tr[0])==="Datum") break;
-        const t1 = clean(tr[14]), t2 = clean(tr[15]);
-        if(!t1 && !t2) continue;
-        teams.push({ club:clean(tr[0]), by:[t1,t2].filter(Boolean).join(" + "),
-                     place:parseInt(clean(tr[16]),10)||null,
-                     points:parseInt(clean(tr[17]),10)||0 });
-      }
-      teams.sort((a,b)=>(a.place||99)-(b.place||99));
-      if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams });
-      i = j-1;
+    if(!isLabel(rows[i])) continue;
+    const label = rows[i], info = rows[i+1] || [];
+    const lc = (...n)=>{ const w=n.map(normHeader); return label.findIndex(c=>w.includes(normHeader(c))); };
+    const at = (row,x)=> x>=0 ? clean(row[x]) : "";
+    const name = at(info, lc("Naziv")), date = at(info, lc("Datum")), cat = at(info, lc("Kategorija"));
+    // team-header row = next row carrying Mesto / Bodovi / Tim
+    let h = i+2;
+    while(h<rows.length && !isLabel(rows[h]) &&
+          !(rows[h]||[]).some(c=>["mesto","bodovi","tim"].includes(normHeader(c)))) h++;
+    if(h>=rows.length || isLabel(rows[h])) { continue; }
+    const hdr = rows[h];
+    const tc = (...n)=>{ const w=n.map(normHeader); return hdr.findIndex(c=>w.includes(normHeader(c))); };
+    const ci = { tim:tc("Tim"), stars:tc("Zvezdice"), avg:tc("Prosek"),
+                 fw:tc("Najbolji FW"), mf:tc("Najbolji MF"), df:tc("Najbolji DF"), gk:tc("Najbolji GK"),
+                 t1:tc("Takmičar 1","Takmicar 1","Takmičar"), t2:tc("Takmičar 2","Takmicar 2"),
+                 place:tc("Mesto"), pts:tc("Bodovi") };
+    const teams = []; let j = h+1;
+    for(; j<rows.length; j++){
+      const tr = rows[j] || [];
+      if(isLabel(tr)) break;
+      const t1 = ci.t1>=0?clean(tr[ci.t1]):"", t2 = ci.t2>=0?clean(tr[ci.t2]):"";
+      if(!t1 && !t2) continue;
+      const bp = (k,pos)=>{ if(k<0) return null; const nm=clean(tr[k]); if(!nm) return null; return {pos, name:nm, rating:clean(tr[k+1])}; };
+      teams.push({
+        club: ci.tim>=0?clean(tr[ci.tim]):"",
+        stars: ci.stars>=0?clean(tr[ci.stars]):"",
+        avg: ci.avg>=0?clean(tr[ci.avg]):"",
+        by: [t1,t2].filter(Boolean).join(" + "),
+        place: ci.place>=0?parseInt(clean(tr[ci.place]),10)||null:null,
+        points: ci.pts>=0?parseInt(clean(tr[ci.pts]),10)||0:0,
+        best: [bp(ci.fw,"FW"), bp(ci.mf,"MF"), bp(ci.df,"DF"), bp(ci.gk,"GK")].filter(Boolean)
+      });
     }
+    teams.sort((a,b)=>(a.place||99)-(b.place||99));
+    if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams });
+    i = j-1;
   }
   return out.sort((a,b)=>tournKey(b.date)-tournKey(a.date));
 }
@@ -936,24 +995,27 @@ async function loadSeason(year){
   const gids = SEASON_GIDS[year]; if(!gids) return;
   let data = _seasonCache[year];
   if(!data){
-    data = { standings:[], scorers:[], tournaments:[] };
+    data = { standings:[], scorers:[], tournaments:[], rawStandings:"", rawScoring:"" };
     await Promise.all(gids.map(async gid => {
       try{
         const res = await fetch(csvUrl(gid), {mode:"cors"});
         if(!res.ok) return;
         const text = await res.text();
         const kind = classifyTab(text);
-        if(kind==="standings")        data.standings   = parse26ta(text);
+        if(kind==="standings"){       data.standings = parse26ta(text); data.rawStandings = text; }
         else if(kind==="scorers")     data.scorers     = parse26i(text);
         else if(kind==="tournaments") data.tournaments = parse26tu(text);
+        else if(kind==="scoring")     data.rawScoring  = text;
       }catch(e){}
     }));
     _seasonCache[year] = data;
   }
   const rows = applyTournamentStats(data.standings, data.tournaments);
   renderStandings(rows, "sp-standings");
-  renderScorers((data.scorers||[]).slice(0,5), "sp-scorers");
-  renderTournaments(data.tournaments||[], "sp-tourns");
+  renderSheetTable(data.rawStandings, "sp-breakdown");
+  renderScorers(data.scorers||[], "sp-scorers", {date:true});
+  renderTournaments(data.tournaments||[], "sp-tourns", {detailed:true});
+  renderSheetTable(data.rawScoring, "sp-scoring");
   document.getElementById("sp-champ").textContent = rows[0] ? rows[0].nick : "-";
   const top = (data.scorers||[])[0];
   document.getElementById("sp-pots").textContent = top ? (top.by ? `${top.player} (${top.by})` : top.player) : "-";
@@ -964,9 +1026,7 @@ function showSeason(year){
   document.getElementById("sp-year").textContent = "Season " + year;
   document.getElementById("sp-title").textContent = year;
   window.scrollTo(0,0);
-  document.getElementById("sp-standings").innerHTML = "";
-  document.getElementById("sp-scorers").innerHTML = "";
-  document.getElementById("sp-tourns").innerHTML = "";
+  ["sp-standings","sp-breakdown","sp-scorers","sp-tourns","sp-scoring"].forEach(id=>document.getElementById(id).innerHTML="");
   document.getElementById("sp-champ").textContent = "\u2014";
   document.getElementById("sp-pots").textContent = "\u2014";
   loadSeason(year).catch(()=>console.info("Season "+year+" not loaded."));
