@@ -565,6 +565,8 @@ const SQUAD = [
   {nick:"Srki",     title:"The Lawyer",            kit:"var(--cyan-deep)"}
 ];
 let CURRENT_PTS = {};
+let KIT_COLOR = {};
+let LAST_STANDINGS = null;
 const HONOURS = [
   {yr:2026, champ:"?", pots:"?", current:true},
   {yr:2025, champ:"Mili",  pots:"Erling Haaland (Golranče)"},
@@ -685,6 +687,7 @@ function setupCollapse(el, count, btn){
 }
 const SB_STAR = '<svg class="sb-star" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.95 6.36 6.99.72-5.2 4.71 1.43 6.86L12 17.98 5.83 21.6l1.43-6.86-5.2-4.71 6.99-.72L12 2z"/></svg>';
 function renderStandings(rows, target="standings"){
+  if(target==="standings") LAST_STANDINGS = rows;
   document.getElementById(target).innerHTML = rows.map(r=>{
     const form = r.form.map(p=>{
       const cls = p===1?'f-t':p===2?'f-f':(p===3||p===4)?'f-s':'f-x';
@@ -692,7 +695,7 @@ function renderStandings(rows, target="standings"){
     }).join("");
     return `<tr>
       <td class="pos ${r.pos===1?'p1':''}">${r.pos}</td>
-      <td class="name-cell"><span class="name-inner"><span class="kit" style="background:${r.kit}"></span><span class="nm">${r.nick}</span></span></td>
+      <td class="name-cell"><span class="name-inner"><span class="kit" style="background:${kitColor(r.nick)}"></span><span class="nm">${r.nick}</span></span></td>
       <td class="hide">${r.pld!=null?r.pld:0}</td>
       <td class="hide"><span class="ttl-n">${r.ttl}</span></td>
       <td class="hide">${r.fin}</td>
@@ -726,11 +729,82 @@ function ordinal(n){
   const s=["th","st","nd","rd"], v=n%100;
   return n+(s[(v-20)%10]||s[v]||s[0]);
 }
+function kitColor(nick){ return KIT_COLOR[nick] || KITS[nick] || "var(--steel)"; }
 function squadStats(nick){
-  const row = (VECNA.rows||[]).find(r=>r.name===nick);
+  const idx = (VECNA.rows||[]).findIndex(r=>r.name===nick);
+  const row = idx>=0 ? VECNA.rows[idx] : null;
   let titles=0, seasons=0, best=null;
   if(row) row.places.forEach(p=>{ if(p!=null){ seasons++; if(p===1) titles++; if(best==null||p<best) best=p; } });
-  return { titles, seasons, best, pts: CURRENT_PTS[nick] };
+  const inCurrent = CURRENT_PTS[nick]!=null;
+  return { titles, seasons: seasons + (inCurrent?1:0), best, overall: idx>=0?idx+1:null, pts: CURRENT_PTS[nick] };
+}
+/* derive each player's accent colour from their photo */
+function rgbToHsl(r,g,b){
+  r/=255;g/=255;b/=255; const mx=Math.max(r,g,b),mn=Math.min(r,g,b); let h,s,l=(mx+mn)/2;
+  if(mx===mn){ h=s=0; } else {
+    const dd=mx-mn; s=l>0.5?dd/(2-mx-mn):dd/(mx+mn);
+    switch(mx){ case r: h=(g-b)/dd+(g<b?6:0); break; case g: h=(b-r)/dd+2; break; default: h=(r-g)/dd+4; }
+    h/=6;
+  }
+  return { h:h*360, s, l };
+}
+function hslToRgb(h,s,l){
+  h/=360; const hue2=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+  let r,g,b; if(s===0){ r=g=b=l; } else { const q=l<0.5?l*(1+s):l+s-l*s, p=2*l-q; r=hue2(p,q,h+1/3); g=hue2(p,q,h); b=hue2(p,q,h-1/3); }
+  return `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
+}
+function hueDist(a,b){ const d=Math.abs(a-b)%360; return Math.min(d,360-d); }
+function nearestFreeHue(base, used, gap){
+  if(!used.some(u=>hueDist(u,base)<gap)) return base;
+  for(let d=6; d<=180; d+=6){
+    for(const c of [(base+d)%360, (base-d+360)%360]){
+      if(!used.some(u=>hueDist(u,c)<gap)) return c;
+    }
+  }
+  return base;
+}
+function dominantColor(src){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const w=52, h=Math.max(1,Math.round(52*img.height/img.width));
+        const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+        const ctx=cv.getContext("2d"); ctx.drawImage(img,0,0,w,h);
+        const d=ctx.getImageData(0,0,w,h).data, buckets={};
+        for(let i=0;i<d.length;i+=4){
+          const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3]; if(a<128) continue;
+          const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+          const lum=mx/255, sat=mx===0?0:(mx-mn)/mx;
+          if(lum<0.22||lum>0.9||sat<0.28) continue;
+          const wgt=sat*sat, key=(r>>5)+"_"+(g>>5)+"_"+(b>>5);
+          (buckets[key]=buckets[key]||{n:0,r:0,g:0,b:0});
+          buckets[key].n+=wgt; buckets[key].r+=r*wgt; buckets[key].g+=g*wgt; buckets[key].b+=b*wgt;
+        }
+        let best=null; for(const k in buckets){ if(!best||buckets[k].n>best.n) best=buckets[k]; }
+        if(!best){ resolve(null); return; }
+        resolve({ r:best.r/best.n, g:best.g/best.n, b:best.b/best.n });
+      }catch(e){ resolve(null); }
+    };
+    img.onerror=()=>resolve(null);
+    img.src=src;
+  });
+}
+async function computeKitColors(){
+  const rank = n => { const i=(VECNA.rows||[]).findIndex(r=>r.name===n); return i<0?999:i; };
+  const list=[];
+  await Promise.all(Object.keys(IMG).map(async n=>{
+    const c=await dominantColor(IMG[n]);
+    if(c){ const hsl=rgbToHsl(c.r,c.g,c.b); list.push({nick:n, h:hsl.h, s:hsl.s, l:hsl.l}); }
+  }));
+  list.sort((a,b)=> rank(a.nick)-rank(b.nick));   // higher all-time rank keeps its true colour
+  const used=[], GAP=32;
+  list.forEach(e=>{
+    const h=nearestFreeHue(e.h, used, GAP); used.push(h);
+    KIT_COLOR[e.nick]=hslToRgb(h, Math.max(e.s,0.62), Math.min(Math.max(e.l,0.46),0.58));
+  });
+  renderSquad();
+  if(LAST_STANDINGS) renderStandings(LAST_STANDINGS);
 }
 function renderSquad(){
   const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
@@ -744,15 +818,15 @@ function renderSquad(){
   document.getElementById("squad-grid").innerHTML = ranked.map(p=>{
     const st = p._s;
     return `<div class="card">
-      <span class="spine" style="background:${p.kit}"></span>
+      <span class="spine" style="background:${kitColor(p.nick)}"></span>
       ${IMG[p.nick] ? `<div class="card-photo"><img src="${IMG[p.nick]}" alt="${p.nick}" loading="lazy"></div>` : ""}
       <div class="card-body">
         <div class="who"><div class="nick">${p.nick}</div><div class="title">${p.title}</div></div>
         <div class="squad-stats">
           ${cell(st.seasons, "Seasons")}
-          ${cell(ordinal(st.best), "Best")}
           ${cell(st.titles, "Titles")}
-          ${cell(st.pts!=null ? nf(st.pts) : "-", "Points")}
+          ${cell(st.overall!=null ? ordinal(st.overall) : "-", "Overall")}
+          ${cell(st.pts!=null ? nf(st.pts) : "-", "Current Pts")}
         </div>
       </div>
     </div>`;
@@ -1201,6 +1275,7 @@ document.getElementById("lightbox").addEventListener("click", closeLightbox);
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeLightbox(); });
 loadGallery();
 loadAdHoc();
+computeKitColors();
 
 /* reveal on scroll */
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("in")}),{threshold:.08});
