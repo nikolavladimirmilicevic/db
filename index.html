@@ -809,12 +809,7 @@ async function computeKitColors(){
 function renderSquad(){
   const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
   const ranked = SQUAD.map(p => ({ ...p, _s: squadStats(p.nick) }))
-    .sort((a,b) =>
-      b._s.titles - a._s.titles ||
-      (b._s.pts||0) - (a._s.pts||0) ||
-      (a._s.best==null?99:a._s.best) - (b._s.best==null?99:b._s.best) ||
-      b._s.seasons - a._s.seasons
-    );
+    .sort((a,b) => (a._s.overall==null?999:a._s.overall) - (b._s.overall==null?999:b._s.overall));
   document.getElementById("squad-grid").innerHTML = ranked.map(p=>{
     const st = p._s;
     return `<div class="card">
@@ -825,7 +820,7 @@ function renderSquad(){
         <div class="squad-stats">
           ${cell(st.seasons, "Seasons")}
           ${cell(st.titles, "Titles")}
-          ${cell(st.overall!=null ? ordinal(st.overall) : "-", "Overall")}
+          ${cell(st.overall!=null ? ordinal(st.overall) : "-", "All Time")}
           ${cell(st.pts!=null ? nf(st.pts) : "-", "Current Pts")}
         </div>
       </div>
