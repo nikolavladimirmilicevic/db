@@ -917,8 +917,9 @@ function applyTournamentStats(standings, tournaments){
   const stats = tournamentStats(tournaments);
   return standings.map(r => {
     const st = stats[r.nick] || {ttl:0, fin:0, sf:0, seq:[]};
-    // cumulative: semis = 3rd/4th; finals include semis; titles include finals + semis
-    return { ...r, pld:st.seq.length, ttl:st.ttl+st.fin+st.sf, fin:st.fin+st.sf, sf:st.sf, form:st.seq.slice(-5) };
+    // cumulative the natural way: a title is also a final and a semi.
+    // TTL = titles; F = titles + finals (finalists); SF = titles + finals + semis (semifinalists)
+    return { ...r, pld:st.seq.length, ttl:st.ttl, fin:st.ttl+st.fin, sf:st.ttl+st.fin+st.sf, form:st.seq.slice(-5) };
   });
 }
 /* the tournaments feed is the largest one and is used by two sections,
