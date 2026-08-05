@@ -236,6 +236,7 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .breakdown th.bd-name,.breakdown td.bd-name{text-align:left;padding-left:14px;font-weight:700}
 .breakdown td{text-align:center}
 .breakdown td.bd-total,.breakdown th.bd-total-h{color:var(--cyan-2);font-weight:800}
+.bd-it{font-style:italic;color:var(--muted)}
 .bd-m0{background:rgba(0,184,232,.15)}.bd-m1{background:rgba(96,96,200,.17)}.bd-m2{background:rgba(0,184,232,.22)}.bd-m3{background:rgba(96,96,200,.11)}.bd-m4{background:rgba(0,184,232,.10)}.bd-m5{background:rgba(96,96,200,.19)}
 .card-photo{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--ink-2)}
 .card-photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -906,7 +907,34 @@ function renderTournaments(list, target="tourns", opts={}){
   if(target==="tourns") setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6);
 }
 /* points breakdown: two-row header (months spanning + sub-codes), like the sheet */
-function renderBreakdown(csvText, targetId){
+async function sheetItalicMap(gid){
+  try{
+    const url = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pubhtml/sheet?headers=false&gid=${gid}`;
+    const res = await fetch(url, {mode:"cors"});
+    if(!res.ok) return {};
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const italic = new Set();
+    doc.querySelectorAll("style").forEach(st=>{
+      (st.textContent||"").replace(/\.([A-Za-z0-9_-]+)[^{]*\{([^}]*)\}/g, (m,cls,body)=>{
+        if(/font-style\s*:\s*italic/i.test(body)) italic.add(cls);
+        return m;
+      });
+    });
+    const map = {};
+    doc.querySelectorAll("table tr").forEach(trEl=>{
+      const cells = [...trEl.children];
+      const nick = ((cells[1] && cells[1].textContent) || "").trim();
+      if(!nick) return;
+      map[nick] = cells.map(td=>{
+        const cl = (td.getAttribute("class")||"").split(/\s+/);
+        return cl.some(c=>italic.has(c)) || /italic/i.test(td.getAttribute("style")||"");
+      });
+    });
+    return map;
+  }catch(e){ return {}; }
+}
+function renderBreakdown(csvText, targetId, italicMap={}){
   const el=document.getElementById(targetId); if(!el) return;
   if(!csvText){ el.innerHTML=""; return; }
   const rows=Papa.parse(csvText,{skipEmptyLines:false}).data.map(r=>r.map(c=>(c==null?"":String(c)).trim()));
@@ -929,8 +957,9 @@ function renderBreakdown(csvText, targetId){
     + `<th rowspan="2" class="bd-fix bd-total-h">\u03a3</th>`;
   const trSub = groups.map(g=>{ let out=""; for(let k=g.start;k<g.start+g.span;k++) out+=`<th class="bd-sub">${tr(subRow[k]||"")}</th>`; return out; }).join("");
   const body=rows.slice(mIdx+2).filter(r=>r.some(x=>x)).map(r=>{
+    const flags = italicMap[r[1]] || null;
     let cells=`<td class="bd-fix">${r[0]||""}</td><td class="bd-name">${r[1]||""}</td>`;
-    for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++) cells+=`<td>${r[k]||""}</td>`; }
+    for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++){ const it = flags && flags[k]; cells+=`<td class="${it?'bd-it':''}">${r[k]||""}</td>`; } }
     cells+=`<td class="bd-total">${r[lastCol]||""}</td>`;
     return `<tr>${cells}</tr>`;
   }).join("");
@@ -1328,17 +1357,18 @@ async function loadSeason(year){
         if(!res.ok) return;
         const text = await res.text();
         const kind = classifyTab(text);
-        if(kind==="standings"){       data.standings = parse26ta(text); data.rawStandings = text; }
+        if(kind==="standings"){       data.standings = parse26ta(text); data.rawStandings = text; data.standingsGid = gid; }
         else if(kind==="scorers")     data.scorers     = parse26i(text);
         else if(kind==="tournaments") data.tournaments = parse26tu(text);
         else if(kind==="scoring")     data.rawScoring  = text;
       }catch(e){}
     }));
+    data.italicMap = data.standingsGid ? await sheetItalicMap(data.standingsGid) : {};
     _seasonCache[year] = data;
   }
   const rows = applyTournamentStats(data.standings, data.tournaments);
   renderStandings(rows, "sp-standings");
-  renderBreakdown(data.rawStandings, "sp-breakdown");
+  renderBreakdown(data.rawStandings, "sp-breakdown", data.italicMap||{});
   renderScorers(data.scorers||[], "sp-scorers", {date:true});
   renderTournaments(data.tournaments||[], "sp-tourns", {detailed:true});
   renderSheetTable(data.rawScoring, "sp-scoring");
