@@ -62,11 +62,12 @@ nav a:hover{color:var(--cyan-2)}
 section{padding:78px 0}
 section[id],footer[id]{scroll-margin-top:82px}
 section.wrap{padding-top:22px;padding-bottom:22px}
-.sec-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:20px;flex-wrap:wrap}
-.sec-head>div:first-child{flex:1 1 50%;min-width:0}
-.sec-head .idx{font-family:'Nunito',sans-serif;color:var(--muted);font-size:12px;letter-spacing:.2em}
-.sec-head h2{font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(30px,5vw,48px);line-height:1;letter-spacing:.01em;margin-top:8px}
-.sec-head p{color:var(--muted);font-size:14px;flex:1 1 50%;max-width:460px;text-align:left}
+.sec-head{margin-bottom:20px}
+.sec-head .idx{font-family:'Nunito',sans-serif;color:var(--muted);font-size:12px;letter-spacing:.2em;margin-bottom:8px}
+.sec-title{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.sec-title h2{flex:0 0 auto}
+.sec-head h2{font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(30px,5vw,48px);line-height:1;letter-spacing:.01em;margin:0}
+.sec-head p{color:var(--muted);font-size:14px;flex:1 1 0;min-width:0;text-align:left;margin:0}
 
 .legend{display:flex;flex-wrap:wrap;gap:8px 20px;margin-bottom:22px;font-family:'Nunito',sans-serif;font-size:11.5px;color:var(--muted);letter-spacing:.02em}
 .legend b{color:var(--silver);font-weight:700}
@@ -240,12 +241,12 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .card-photo img{width:100%;height:100%;object-fit:cover;display:block}
 .card-photo::after{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(to bottom,transparent,var(--surface-2));pointer-events:none}
 .card-body{padding:16px 22px 20px}
-.gallery-grid{column-count:4;column-gap:14px}
-@media(max-width:1000px){.gallery-grid{column-count:3}}
-@media(max-width:680px){.gallery-grid{column-count:2}}
-@media(max-width:430px){.gallery-grid{column-count:1}}
-.gallery-item{break-inside:avoid;margin:0 0 14px;border-radius:12px;overflow:hidden;border:1px solid var(--line);cursor:zoom-in;position:relative;background:var(--surface)}
-.gallery-item img{width:100%;display:block;transition:transform .45s ease}
+.gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+@media(max-width:1000px){.gallery-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:680px){.gallery-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){.gallery-grid{grid-template-columns:1fr}}
+.gallery-item{aspect-ratio:1/1;overflow:hidden;border-radius:12px;border:1px solid var(--line);cursor:zoom-in;position:relative;background:var(--surface)}
+.gallery-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s ease}
 .gallery-item:hover img{transform:scale(1.05)}
 .gallery-empty{color:var(--muted);font-size:14px;font-style:italic}
 #lightbox{position:fixed;inset:0;z-index:100;background:rgba(20,16,45,.93);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
@@ -257,8 +258,8 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .see-all:hover{border-color:var(--cyan);background:rgba(0,184,232,.08)}
 .perf.collapsed tbody tr:nth-child(n+6){display:none}
 .alltime.collapsed tbody tr:nth-child(n+6){display:none}
-.tourns.collapsed>.tourn:nth-child(n+6){display:none}
-.gallery-grid.collapsed>.gallery-item:nth-child(n+6){display:none}
+.tourns.collapsed>.tourn:nth-child(n+7){display:none}
+.gallery-grid.collapsed>.gallery-item:nth-child(n+13){display:none}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -317,11 +318,8 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 
 <section id="season" class="wrap reveal">
   <div class="sec-head">
-    <div>
-      <div class="idx">01 / RANKING</div>
-      <h2>Current Season</h2>
-    </div>
-    <p>An ATP style points race. Finish high in each month's tournaments and the total climbs.</p>
+    <div class="idx">01 / RANKING</div>
+    <div class="sec-title"><h2>Current Season</h2><p>An ATP style points race. Finish high in each month's tournaments and the total climbs.</p></div>
   </div>
   <div class="legend">
     <span class="tier"><b>Monthly</b>&nbsp; 1000 / 600 / 360</span>
@@ -354,11 +352,8 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 
 <section id="tournaments" class="wrap reveal">
   <div class="sec-head">
-    <div>
-      <div class="idx">02 / RESULTS</div>
-      <h2>Tournaments</h2>
-    </div>
-    <p>Every event this season, newest first. Who played, which club, where they finished and the points earned.</p>
+    <div class="idx">02 / RESULTS</div>
+    <div class="sec-title"><h2>Tournaments</h2><p>Every event this season, newest first. Who played, which club, where they finished and the points earned.</p></div>
   </div>
   <div class="tourns" id="tourns"></div>
   <button class="see-all" id="tourns-more" hidden></button>
@@ -367,22 +362,16 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 </section>
 <section id="squad" class="wrap reveal">
   <div class="sec-head">
-    <div>
-      <div class="idx">03 / SQUAD</div>
-      <h2>The Squad</h2>
-    </div>
-    <p>The crew, ranked by honours and current form.</p>
+    <div class="idx">03 / SQUAD</div>
+    <div class="sec-title"><h2>The Squad</h2><p>The crew, ranked by honours and current form.</p></div>
   </div>
   <div class="squad" id="squad-grid"></div>
 </section>
 
 <section id="alltime" class="wrap reveal">
   <div class="sec-head">
-    <div>
-      <div class="idx">04 / ALL-TIME</div>
-      <h2>All-Time</h2>
-    </div>
-    <p>Final league placing for every competitor, every completed season since 2017. Champions highlighted.</p>
+    <div class="idx">04 / ALL-TIME</div>
+    <div class="sec-title"><h2>All-Time</h2><p>Final league placing for every competitor, every completed season since 2017. Champions highlighted.</p></div>
   </div>
   <div class="alltime-wrap"><table class="alltime" id="alltime-table"></table></div>
   <div class="alltime-key">
@@ -397,22 +386,16 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 
 <section id="history" class="wrap reveal">
   <div class="sec-head">
-    <div>
-      <div class="idx">05 / HALL OF FAME</div>
-      <h2>History</h2>
-    </div>
-    <p>Champion and Player of the Season for every completed year.</p>
+    <div class="idx">05 / HALL OF FAME</div>
+    <div class="sec-title"><h2>History</h2><p>Champion and Player of the Season for every completed year.</p></div>
   </div>
   <div class="honours" id="honours"></div>
 </section>
 
 <section id="gallery" class="wrap reveal">
   <div class="sec-head">
-    <div>
-      <div class="idx">06 / GALLERY</div>
-      <h2>Gallery</h2>
-    </div>
-    <p>Moments from the crew, shuffled fresh on every visit.</p>
+    <div class="idx">06 / GALLERY</div>
+    <div class="sec-title"><h2>Gallery</h2><p>Moments from the crew, shuffled fresh on every visit.</p></div>
   </div>
   <div class="gallery-grid" id="gallery-grid"></div>
   <button class="see-all" id="gallery-more" hidden></button>
@@ -435,7 +418,10 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
     </div>
   </div>
   <section class="wrap" id="sec-standings">
-    <div class="sec-head"><div><div class="idx">01 / FINAL TABLE</div><h2>Standings</h2></div></div>
+    <div class="sec-head">
+    <div class="idx">01 / FINAL TABLE</div>
+    <div class="sec-title"><h2>Standings</h2></div>
+  </div>
     <div class="table-card">
       <table>
         <thead><tr><th>#</th><th class="name">Player</th><th class="hide">PLD</th><th class="hide">TTL</th><th class="hide">F</th><th class="hide">SF</th><th>PTS</th><th class="hide">Form</th></tr></thead>
@@ -446,19 +432,31 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
     <div class="raw-wrap" id="sp-breakdown"></div>
   </section>
   <section class="wrap" id="sec-scorers">
-    <div class="sec-head"><div><div class="idx">02 / SCORERS</div><h2>Top Performances</h2></div></div>
+    <div class="sec-head">
+    <div class="idx">02 / SCORERS</div>
+    <div class="sec-title"><h2>Top Performances</h2></div>
+  </div>
     <div class="table-card" id="sp-scorers"></div>
   </section>
   <section class="wrap" id="sec-tourns">
-    <div class="sec-head"><div><div class="idx">03 / RESULTS</div><h2>Tournaments</h2></div></div>
+    <div class="sec-head">
+    <div class="idx">03 / RESULTS</div>
+    <div class="sec-title"><h2>Tournaments</h2></div>
+  </div>
     <div class="tourns" id="sp-tourns"></div>
   </section>
   <section class="wrap" id="sec-scoring">
-    <div class="sec-head"><div><div class="idx">04 / SCORING</div><h2>Scoring &amp; Calendar</h2></div></div>
+    <div class="sec-head">
+    <div class="idx">04 / SCORING</div>
+    <div class="sec-title"><h2>Scoring &amp; Calendar</h2></div>
+  </div>
     <div class="raw-wrap" id="sp-scoring"></div>
   </section>
   <section class="wrap" id="sec-legacy" hidden>
-    <div class="sec-head"><div><div class="idx">SEASON</div><h2>Season Table</h2></div></div>
+    <div class="sec-head">
+    <div class="idx">SEASON</div>
+    <div class="sec-title"><h2>Season Table</h2></div>
+  </div>
     <div class="raw-wrap" id="sp-legacy"></div>
   </section>
 </div>
@@ -670,9 +668,10 @@ function tr(text){
 /* ---------- render ---------- */
 const nf = n => n.toLocaleString('en-US');
 function setLeader(s){ if(s[0]) document.getElementById("sb-leader").innerHTML = `${s[0].nick} <small>${nf(s[0].pts)}</small>`; }
-function setupCollapse(el, count, btn){
+function setupCollapse(el, count, btn, limit){
+  limit = limit || 5;
   if(!el || !btn) return;
-  if(count > 5){
+  if(count > limit){
     el.classList.add("collapsed");
     btn.hidden = false;
     btn.textContent = "See all " + count;
@@ -797,11 +796,21 @@ async function computeKitColors(){
     const c=await dominantColor(IMG[n]);
     if(c){ const hsl=rgbToHsl(c.r,c.g,c.b); list.push({nick:n, h:hsl.h, s:hsl.s, l:hsl.l}); }
   }));
-  list.sort((a,b)=> rank(a.nick)-rank(b.nick));   // higher all-time rank keeps its true colour
-  const used=[], GAP=32;
+  list.sort((a,b)=> rank(a.nick)-rank(b.nick));
+  // group players by colour family, then tell same-family players apart by lightness
+  // (keeps team-like hues instead of pushing blues/reds into odd colours)
+  const CLUSTER=26, clusters=[];
   list.forEach(e=>{
-    const h=nearestFreeHue(e.h, used, GAP); used.push(h);
-    KIT_COLOR[e.nick]=hslToRgb(h, Math.max(e.s,0.62), Math.min(Math.max(e.l,0.46),0.58));
+    let cl=clusters.find(c=>hueDist(c.h,e.h)<CLUSTER);
+    if(!cl){ cl={h:e.h, members:[]}; clusters.push(cl); }
+    cl.members.push(e);
+  });
+  clusters.forEach(cl=>{
+    const n=cl.members.length;
+    cl.members.forEach((e,i)=>{
+      const l = n===1 ? 0.54 : 0.44 + (0.64-0.44)*(i/(n-1));
+      KIT_COLOR[e.nick]=hslToRgb(e.h, Math.max(e.s,0.62), l);
+    });
   });
   renderSquad();
   if(LAST_STANDINGS) renderStandings(LAST_STANDINGS);
@@ -882,7 +891,7 @@ function renderTournaments(list, target="tourns", opts={}){
         </div>`;
       }).join("")}
     </div>`).join("");
-  if(target==="tourns") setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"));
+  if(target==="tourns") setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6);
 }
 /* points breakdown: two-row header (months spanning + sub-codes), like the sheet */
 function renderBreakdown(csvText, targetId){
@@ -1264,7 +1273,7 @@ async function loadGallery(){
   }catch(e){}
   if(!files.length){ grid.innerHTML='<p class="gallery-empty">The gallery fills in automatically once the site is live.</p>'; return; }
   grid.innerHTML=shuffle(files).map(src=>`<div class="gallery-item"><img src="${src}" alt="" loading="lazy"></div>`).join("");
-  setupCollapse(grid, files.length, document.getElementById("gallery-more"));
+  setupCollapse(grid, files.length, document.getElementById("gallery-more"), 12);
   grid.addEventListener("click",e=>{ const img=e.target.closest("img"); if(img) openLightbox(img.src); });
 }
 document.getElementById("lightbox").addEventListener("click", closeLightbox);
