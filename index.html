@@ -907,34 +907,35 @@ function renderTournaments(list, target="tourns", opts={}){
   if(target==="tourns") setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6);
 }
 /* points breakdown: two-row header (months spanning + sub-codes), like the sheet */
-async function sheetItalicMap(gid){
-  try{
-    const url = `https://docs.google.com/spreadsheets/d/e/${PUB_ID}/pubhtml/sheet?headers=false&gid=${gid}`;
-    const res = await fetch(url, {mode:"cors"});
-    if(!res.ok) return {};
-    const html = await res.text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const italic = new Set();
-    doc.querySelectorAll("style").forEach(st=>{
-      (st.textContent||"").replace(/\.([A-Za-z0-9_-]+)[^{]*\{([^}]*)\}/g, (m,cls,body)=>{
-        if(/font-style\s*:\s*italic/i.test(body)) italic.add(cls);
-        return m;
-      });
-    });
-    const map = {};
-    doc.querySelectorAll("table tr").forEach(trEl=>{
-      const cells = [...trEl.children];
-      const nick = ((cells[1] && cells[1].textContent) || "").trim();
-      if(!nick) return;
-      map[nick] = cells.map(td=>{
-        const cl = (td.getAttribute("class")||"").split(/\s+/);
-        return cl.some(c=>italic.has(c)) || /italic/i.test(td.getAttribute("style")||"");
-      });
-    });
-    return map;
-  }catch(e){ return {}; }
+/* is a breakdown column still italic (defended from last season, not yet resolved)? */
+function breakdownItalic(code, year, tournaments){
+  code = (code||"").trim().toUpperCase();
+  if(!code || !year) return false;
+  const now = new Date();
+  const cat = code[0];
+  const tM = t => parseInt((t.date||"").split(".")[1],10);
+  const tY = t => parseInt((t.date||"").split(".")[2],10);
+  if(cat==="Y"){
+    if(now >= new Date(year, 8, 1)) return false;            // moved into next season
+    if(tournaments.some(t=>t.catCode==="Y")) return false;   // annual played this season
+    return true;
+  }
+  if(cat==="Q"){
+    const q = parseInt(code.slice(1),10);
+    const qm = {4:[10,11,12], 1:[1,2,3], 2:[4,5,6], 3:[7,8,9]}[q]; if(!qm) return false;
+    const qy = q===4 ? year-1 : year;
+    if(now >= new Date(qy, qm[qm.length-1], 1)) return false; // quarter passed
+    if(tournaments.some(t=>t.catCode==="Q" && qm.includes(tM(t)) && tY(t)===qy)) return false;
+    return true;
+  }
+  // M (monthly) or D (ad hoc)
+  const m = parseInt(code.slice(1),10); if(!m) return false;
+  const my = m>=9 ? year-1 : year;
+  if(now >= new Date(my, m, 1)) return false;                // month passed
+  if(cat==="M" && tournaments.some(t=>t.catCode==="M" && tM(t)===m && tY(t)===my)) return false;
+  return true;
 }
-function renderBreakdown(csvText, targetId, italicMap={}){
+function renderBreakdown(csvText, targetId, ctx={}){
   const el=document.getElementById(targetId); if(!el) return;
   if(!csvText){ el.innerHTML=""; return; }
   const rows=Papa.parse(csvText,{skipEmptyLines:false}).data.map(r=>r.map(c=>(c==null?"":String(c)).trim()));
@@ -956,10 +957,11 @@ function renderBreakdown(csvText, targetId, italicMap={}){
     + groups.map((g,i)=>`<th colspan="${g.span}" class="bd-month bd-m${i%palette}">${tr(g.label)}</th>`).join("")
     + `<th rowspan="2" class="bd-fix bd-total-h">\u03a3</th>`;
   const trSub = groups.map(g=>{ let out=""; for(let k=g.start;k<g.start+g.span;k++) out+=`<th class="bd-sub">${tr(subRow[k]||"")}</th>`; return out; }).join("");
+  const itCol = {};
+  for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++) itCol[k] = breakdownItalic(subRow[k], ctx.year, ctx.tournaments||[]); }
   const body=rows.slice(mIdx+2).filter(r=>r.some(x=>x)).map(r=>{
-    const flags = italicMap[r[1]] || null;
     let cells=`<td class="bd-fix">${r[0]||""}</td><td class="bd-name">${r[1]||""}</td>`;
-    for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++){ const it = flags && flags[k]; cells+=`<td class="${it?'bd-it':''}">${r[k]||""}</td>`; } }
+    for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++){ const it = itCol[k] && (r[k]||"")!==""; cells+=`<td class="${it?'bd-it':''}">${r[k]||""}</td>`; } }
     cells+=`<td class="bd-total">${r[lastCol]||""}</td>`;
     return `<tr>${cells}</tr>`;
   }).join("");
@@ -1363,12 +1365,11 @@ async function loadSeason(year){
         else if(kind==="scoring")     data.rawScoring  = text;
       }catch(e){}
     }));
-    data.italicMap = data.standingsGid ? await sheetItalicMap(data.standingsGid) : {};
     _seasonCache[year] = data;
   }
   const rows = applyTournamentStats(data.standings, data.tournaments);
   renderStandings(rows, "sp-standings");
-  renderBreakdown(data.rawStandings, "sp-breakdown", data.italicMap||{});
+  renderBreakdown(data.rawStandings, "sp-breakdown", {year, tournaments:data.tournaments||[]});
   renderScorers(data.scorers||[], "sp-scorers", {date:true});
   renderTournaments(data.tournaments||[], "sp-tourns", {detailed:true});
   renderSheetTable(data.rawScoring, "sp-scoring");
