@@ -767,51 +767,63 @@ function dominantColor(src){
     const img=new Image();
     img.onload=()=>{
       try{
-        const w=52, h=Math.max(1,Math.round(52*img.height/img.width));
+        const w=64, h=Math.max(1,Math.round(64*img.height/img.width));
         const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
         const ctx=cv.getContext("2d"); ctx.drawImage(img,0,0,w,h);
         const d=ctx.getImageData(0,0,w,h).data, buckets={};
+        let white=0, total=0;
         for(let i=0;i<d.length;i+=4){
           const r=d[i],g=d[i+1],b=d[i+2],a=d[i+3]; if(a<128) continue;
+          total++;
           const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
           const lum=mx/255, sat=mx===0?0:(mx-mn)/mx;
+          if(lum>0.72 && sat<0.20) white++;
           if(lum<0.22||lum>0.9||sat<0.28) continue;
           const wgt=sat*sat, key=(r>>5)+"_"+(g>>5)+"_"+(b>>5);
           (buckets[key]=buckets[key]||{n:0,r:0,g:0,b:0});
           buckets[key].n+=wgt; buckets[key].r+=r*wgt; buckets[key].g+=g*wgt; buckets[key].b+=b*wgt;
         }
+        const wf = total ? white/total : 0;
         let best=null; for(const k in buckets){ if(!best||buckets[k].n>best.n) best=buckets[k]; }
-        if(!best){ resolve(null); return; }
-        resolve({ r:best.r/best.n, g:best.g/best.n, b:best.b/best.n });
+        if(!best){ resolve({ r:200, g:200, b:200, white:wf }); return; }
+        resolve({ r:best.r/best.n, g:best.g/best.n, b:best.b/best.n, white:wf });
       }catch(e){ resolve(null); }
     };
     img.onerror=()=>resolve(null);
     img.src=src;
   });
 }
+/* fixed player-card palette (from the PES 2021 art, minus the purple background) */
+const PALETTE = [
+  {hex:"#f2f2f4", hue:null},   // white
+  {hex:"#00d18f", hue:161},    // turquoise
+  {hex:"#e5007e", hue:327},    // cyclamen
+  {hex:"#2f66d6", hue:220},    // blue
+  {hex:"#f23e50", hue:354}     // light red
+];
+function permutations(a){
+  if(a.length<=1) return [a];
+  const out=[];
+  a.forEach((v,i)=>{ permutations(a.slice(0,i).concat(a.slice(i+1))).forEach(p=>out.push([v,...p])); });
+  return out;
+}
+function paletteCost(f, pal){
+  if(pal.hue===null) return (0.18 - f.white) * 400;   // white: cheaper the whiter the image is
+  return hueDist(f.hue, pal.hue);
+}
 async function computeKitColors(){
-  const rank = n => { const i=(VECNA.rows||[]).findIndex(r=>r.name===n); return i<0?999:i; };
-  const list=[];
-  await Promise.all(Object.keys(IMG).map(async n=>{
-    const c=await dominantColor(IMG[n]);
-    if(c){ const hsl=rgbToHsl(c.r,c.g,c.b); list.push({nick:n, h:hsl.h, s:hsl.s, l:hsl.l}); }
-  }));
-  list.sort((a,b)=> rank(a.nick)-rank(b.nick));
-  // group players by colour family, then tell same-family players apart by lightness
-  // (keeps team-like hues instead of pushing blues/reds into odd colours)
-  const CLUSTER=26, clusters=[];
-  list.forEach(e=>{
-    let cl=clusters.find(c=>hueDist(c.h,e.h)<CLUSTER);
-    if(!cl){ cl={h:e.h, members:[]}; clusters.push(cl); }
-    cl.members.push(e);
+  const nicks = Object.keys(IMG);
+  const results = await Promise.all(nicks.map(n=>dominantColor(IMG[n])));
+  const feats=[];
+  nicks.forEach((n,i)=>{ const d=results[i]; if(d){ feats.push({nick:n, hue:rgbToHsl(d.r,d.g,d.b).h, white:d.white}); } });
+  if(!feats.length) return;
+  // assign each player exactly one palette colour, minimising total mismatch
+  let best=null;
+  permutations(PALETTE.map((_,i)=>i)).forEach(perm=>{
+    let tc=0; for(let i=0;i<feats.length;i++) tc += paletteCost(feats[i], PALETTE[perm[i]]);
+    if(best===null || tc<best.tc) best={tc, perm};
   });
-  clusters.forEach(cl=>{
-    const n=cl.members.length;
-    cl.members.forEach((e,i)=>{
-      const l = n===1 ? 0.54 : 0.44 + (0.64-0.44)*(i/(n-1));
-      KIT_COLOR[e.nick]=hslToRgb(e.h, Math.max(e.s,0.62), l);
-    });
-  });
+  feats.forEach((f,i)=> KIT_COLOR[f.nick] = PALETTE[best.perm[i]].hex);
   renderSquad();
   if(LAST_STANDINGS) renderStandings(LAST_STANDINGS);
 }
