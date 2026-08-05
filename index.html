@@ -884,7 +884,7 @@ function renderAllTime(data){
 }
 function tournKey(d){ const p=(d||"").split(".").map(x=>parseInt(x,10)); return (p[2]||0)*10000+(p[1]||0)*100+(p[0]||0); }
 function renderTournaments(list, target="tourns", opts={}){
-  const sorted = [...list].sort((a,b)=>tournKey(b.date)-tournKey(a.date));
+  const sorted = [...list].sort((a,b)=> tournKey(b.date)-tournKey(a.date) || b.idx-a.idx);
   document.getElementById(target).innerHTML = sorted.map(t=>`
     <div class="tourn">
       <div class="tourn-top">
@@ -1133,10 +1133,10 @@ function parse26tu(csvText){
       });
     }
     teams.sort((a,b)=>(a.place||99)-(b.place||99));
-    if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams });
+    if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams, idx: out.length });
     i = j-1;
   }
-  return out.sort((a,b)=>tournKey(b.date)-tournKey(a.date));
+  return out.sort((a,b)=> tournKey(b.date)-tournKey(a.date) || b.idx-a.idx);
 }
 async function tryLiveTournaments(){
   const list = await loadTournaments();
