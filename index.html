@@ -78,15 +78,16 @@ section.wrap{padding-top:22px;padding-bottom:22px}
 
 .table-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
 table{width:100%;border-collapse:collapse;font-size:14px}
-thead th{font-family:'Nunito',sans-serif;font-weight:400;text-transform:uppercase;font-size:10.5px;letter-spacing:.13em;color:var(--muted);text-align:center;padding:15px 8px;border-bottom:1px solid var(--line)}
+thead th{font-family:'Nunito',sans-serif;font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.13em;color:var(--silver);text-align:center;padding:15px 8px;border-bottom:2px solid rgba(170,160,220,.28);background:rgba(14,10,32,.35)}
 thead th.name{text-align:left;padding-left:22px}
-tbody td{padding:15px 8px;text-align:center;border-bottom:1px solid rgba(170,160,220,.06)}
+tbody td{padding:15px 8px;text-align:center;border-bottom:1px solid rgba(170,160,220,.11)}
 tbody tr:last-child td{border-bottom:none}
 tbody tr{transition:background .18s}
 tbody tr:hover{background:rgba(0,184,232,.05)}
 .pos{font-family:'Nunito',sans-serif;font-weight:900;font-size:16px;width:46px;color:var(--muted)}
 .pos.p1{color:var(--cyan-2)}
 .name-cell{text-align:left;padding-left:22px}
+.table-card tbody tr:nth-child(even) td,.perf tbody tr:nth-child(even) td{background:rgba(255,255,255,.022)}
 .name-inner{display:flex;align-items:center;gap:12px}
 .kit{width:4px;height:26px;border-radius:2px;flex:none}
 .nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:15px}
@@ -151,9 +152,9 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .perf-head{margin:40px 0 14px;font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font-size:19px;letter-spacing:.02em;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .perf-head span{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.03em;color:var(--muted);text-transform:none;font-weight:400}
 .perf{width:100%;border-collapse:collapse;font-size:14px}
-.perf thead th{font-family:'Nunito',sans-serif;font-weight:400;text-transform:uppercase;font-size:10.5px;letter-spacing:.13em;color:var(--muted);text-align:center;padding:14px 8px;border-bottom:1px solid var(--line)}
+.perf thead th{font-family:'Nunito',sans-serif;font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.13em;color:var(--silver);text-align:center;padding:14px 8px;border-bottom:2px solid rgba(170,160,220,.28);background:rgba(14,10,32,.35)}
 .perf thead th.name{text-align:left;padding-left:22px}
-.perf tbody td{padding:12px 8px;text-align:center;border-bottom:1px solid rgba(170,160,220,.06)}
+.perf tbody td{padding:12px 8px;text-align:center;border-bottom:1px solid rgba(170,160,220,.11)}
 .perf tbody tr:last-child td{border-bottom:none}
 .perf tbody tr{transition:background .18s}
 .perf tbody tr:hover{background:rgba(0,184,232,.05)}
@@ -171,7 +172,7 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .cat-Y{color:var(--cyan-2);border-color:var(--cyan-deep);background:rgba(0,184,232,.12)}
 .tourn-name{font-family:'Nunito',sans-serif;font-weight:900;font-size:15px;text-transform:uppercase;letter-spacing:.01em;flex:1;min-width:110px}
 .tourn-date{font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted)}
-.tr{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid rgba(170,160,220,.06)}
+.tr{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid rgba(170,160,220,.11)}
 .tr-main{min-width:0;overflow-wrap:anywhere;line-height:1.35}
 .tr:first-of-type{border-top:none}
 .tr-place{font-family:'Nunito',sans-serif;font-weight:900;font-size:14px;color:var(--muted);text-align:center}
@@ -182,9 +183,9 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .tr-pts.zero{color:var(--muted);font-weight:400}
 .alltime-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface);box-shadow:var(--shadow)}
 table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px}
-.alltime thead th{font-family:'Nunito',sans-serif;font-weight:400;text-transform:uppercase;font-size:10.5px;letter-spacing:.1em;color:var(--muted);text-align:center;padding:14px 6px;border-bottom:1px solid var(--line)}
+.alltime thead th{font-family:'Nunito',sans-serif;font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.1em;color:var(--silver);text-align:center;padding:14px 6px;border-bottom:2px solid rgba(170,160,220,.28);background:rgba(14,10,32,.35)}
 .alltime thead th.pl{text-align:left;padding-left:20px}
-.alltime tbody td{padding:8px 6px;text-align:center;border-bottom:1px solid rgba(170,160,220,.06)}
+.alltime tbody td{padding:8px 6px;text-align:center;border-bottom:1px solid rgba(170,160,220,.11)}
 .alltime tbody tr:last-child td{border-bottom:none}
 .alltime td.pl{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;text-align:left;padding-left:20px;white-space:nowrap}
 .alltime td.tt{font-family:'Nunito',sans-serif;font-weight:900;color:var(--cyan-2);font-size:14px}
@@ -221,8 +222,8 @@ a.year{text-decoration:none;color:inherit;display:block}
 .perf-date-c{font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted);white-space:nowrap}
 .raw-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface);box-shadow:var(--shadow)}
 table.raw{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
-table.raw th{font-family:'Nunito',sans-serif;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.07em;color:var(--muted);text-align:center;padding:11px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-table.raw td{padding:9px 12px;border-bottom:1px solid rgba(170,160,220,.06);white-space:nowrap;color:var(--white)}
+table.raw th{font-family:'Nunito',sans-serif;font-weight:700;text-transform:uppercase;font-size:10px;letter-spacing:.07em;color:var(--silver);text-align:center;padding:11px 12px;border-bottom:2px solid rgba(170,160,220,.28);background:rgba(14,10,32,.35);white-space:nowrap}
+table.raw td{padding:9px 12px;border-bottom:1px solid rgba(170,160,220,.11);white-space:nowrap;color:var(--white)}
 table.raw tbody tr:last-child td{border-bottom:none}
 table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 /* discreet scrollbars */
