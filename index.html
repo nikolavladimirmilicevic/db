@@ -301,6 +301,10 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .h2h-tally{font-family:'Fredoka',sans-serif;font-weight:600;font-size:46px;white-space:nowrap;flex:0 0 auto}
 .h2h-tally .a{color:var(--cyan-2)}.h2h-tally .b{color:var(--purple-2)}.h2h-tally .sep{color:var(--muted);margin:0 8px}
 .h2h-note{text-align:center;color:var(--muted);font-size:13px;font-family:'Nunito',sans-serif;margin-bottom:16px}
+.h2h-sub{display:flex;justify-content:center;align-items:center;gap:16px;flex-wrap:wrap;margin:0 auto 20px;padding:12px 22px;border:1px solid var(--line);border-radius:12px;background:var(--surface);max-width:420px}
+.h2h-sub .lab{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.h2h-sub .t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:24px}
+.h2h-sub .a{color:var(--cyan-2)}.h2h-sub .b{color:var(--purple-2)}.h2h-sub .sep{color:var(--muted)}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -648,6 +652,7 @@ const SQUAD = [
 let CURRENT_PTS = {};
 let KIT_COLOR = {};
 let LAST_STANDINGS = null;
+let CUR_TOURNAMENTS = [];
 const HONOURS = [
   {yr:2026, champ:"?", pots:"?", current:true},
   {yr:2025, champ:"Mili",  pots:"Erling Haaland (Golranče)"},
@@ -957,8 +962,16 @@ function renderH2H(){
         <td><span class="pp-career-fin ${fin(r.pb)}">${ordinal(r.pb)}</span></td>
         <td><span class="pp-career-fin ${r.win===a?'fin-1':'fin-2'}">${r.win}</span></td></tr>`).join("")}</tbody>
     </table></div>` : `<div class="h2h-note">These two never played the same season.</div>`;
+  const inTeam=(by,n)=>(by||"").split(" + ").map(x=>x.trim()).includes(n);
+  let taw=0, tbw=0, tsh=0;
+  (CUR_TOURNAMENTS||[]).forEach(t=>{
+    const tA=t.teams.find(tm=>inTeam(tm.by,a)), tB=t.teams.find(tm=>inTeam(tm.by,b));
+    if(!tA||!tB||tA===tB||tA.place==null||tB.place==null) return;
+    tsh++; if(tA.place<tB.place) taw++; else if(tB.place<tA.place) tbw++;
+  });
+  const sub = tsh ? `<div class="h2h-sub"><span class="lab">This season</span><span class="t"><span class="a">${taw}</span> <span class="sep">-</span> <span class="b">${tbw}</span></span><span class="lab">${tsh} event${tsh===1?'':'s'}</span></div>` : "";
   el.innerHTML = `<div class="h2h-score">${team(a,'a')}<div class="h2h-tally"><span class="a">${aw}</span><span class="sep">-</span><span class="b">${bw}</span></div>${team(b,'b')}</div>
-    <div class="h2h-note">${shared.length} shared season${shared.length===1?'':'s'} \u2014 who finished ahead</div>${table}`;
+    <div class="h2h-note">${shared.length} shared season${shared.length===1?'':'s'} \u2014 who finished ahead by final table</div>${sub}${table}`;
 }
 function fillH2H(){
   const a=document.getElementById("h2h-a"), b=document.getElementById("h2h-b"); if(!a||!b) return;
@@ -1041,7 +1054,7 @@ function renderTournaments(list, target="tourns", opts={}){
         </div>`;
       }).join("")}
     </div>`).join("");
-  if(target==="tourns") setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6);
+  if(target==="tourns"){ setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6); CUR_TOURNAMENTS = list; if(document.getElementById("h2h-result")) renderH2H(); }
 }
 /* points breakdown: two-row header (months spanning + sub-codes), like the sheet */
 /* is a breakdown column still italic (defended from last season, not yet resolved)? */
