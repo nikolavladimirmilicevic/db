@@ -305,6 +305,22 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .h2h-sub .lab{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
 .h2h-sub .t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:24px}
 .h2h-sub .a{color:var(--cyan-2)}.h2h-sub .b{color:var(--purple-2)}.h2h-sub .sep{color:var(--muted)}
+@media(max-width:600px){
+  .h2h-pick{gap:10px}
+  .h2h-sel{min-width:0;flex:1 1 0;font-size:15px;padding:11px 12px}
+  .h2h-vs{flex:0 0 auto}
+  .h2h-score{flex-wrap:nowrap;gap:8px}
+  .h2h-team{flex:1 1 0;min-width:0}
+  .h2h-team .ph{width:60px;height:60px}
+  .h2h-team .nm2{font-size:16px}
+  .h2h-team .sub{font-size:10px}
+  .h2h-tally{font-size:30px}
+  .h2h-tally .sep{margin:0 3px}
+  .h2h-sub{gap:10px;padding:10px 14px;max-width:none}
+  .h2h-sub .t{font-size:20px}
+  #h2h table th,#h2h table td{padding:10px 5px;font-size:12px}
+  #h2h .name-cell{padding-left:12px}
+}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
