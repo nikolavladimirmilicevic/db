@@ -794,7 +794,7 @@ function squadStats(nick){
   let titles=0, seasons=0, best=null;
   if(row) row.places.forEach(p=>{ if(p!=null){ seasons++; if(p===1) titles++; if(best==null||p<best) best=p; } });
   const inCurrent = CURRENT_PTS[nick]!=null;
-  return { titles, seasons: seasons + (inCurrent?1:0), best, overall: idx>=0?idx+1:null, pts: CURRENT_PTS[nick] };
+  return { titles, seasons, best, overall: idx>=0?idx+1:null, pts: CURRENT_PTS[nick] };
 }
 /* derive each player's accent colour from their photo */
 function rgbToHsl(r,g,b){
@@ -1492,7 +1492,7 @@ function renderPlayer(nick){
   const cur = (LAST_STANDINGS||[]).find(r=>r.nick===nick);
   const inCur = CURRENT_PTS[nick]!=null;
   const card=(lab,val)=>`<div class="sp-card"><div class="lab">${lab}</div><div class="val">${val}</div></div>`;
-  let stats = card("Seasons", seasons+(inCur?1:0)) + card("Titles", titles) + card("Podiums", podiums) + card("Best finish", best!=null?ordinal(best):"-");
+  let stats = card("Seasons", seasons) + card("Titles", titles) + card("Podiums", podiums) + card("Best finish", best!=null?ordinal(best):"-");
   if(inCur) stats += card("Current Pts", cur?nf(cur.pts):"-");
   if(cur && cur.form && cur.form.length) stats += card("Form", cur.form.map(p=>`<span class="${fin(p)}">${p}</span>`).join(" "));
   document.getElementById("pp-stats").innerHTML = stats;
