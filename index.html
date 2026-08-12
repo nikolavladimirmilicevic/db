@@ -321,6 +321,22 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
   #h2h table th,#h2h table td{padding:10px 5px;font-size:12px}
   #h2h .name-cell{padding-left:12px}
 }
+.h2h-compare{max-width:420px;margin:0 auto 22px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:2px 18px}
+.h2h-compare .cmp{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(170,160,220,.08)}
+.h2h-compare .cmp:last-child{border-bottom:none}
+.h2h-compare .k{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);flex:1;text-align:center}
+.h2h-compare .v{font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;color:var(--silver);flex:0 0 64px;text-align:center}
+.h2h-compare .va.win{color:var(--cyan-2)}
+.h2h-compare .vb.win{color:var(--purple-2)}
+.h2h-duels{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.duel{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid rgba(170,160,220,.08);flex-wrap:wrap}
+.duel:last-child{border-bottom:none}
+.dn{font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px}
+.dn .dd{font-family:'Nunito',sans-serif;font-weight:400;font-size:11px;color:var(--muted);margin-left:8px}
+.dr{font-family:'Nunito',sans-serif;font-size:13px;color:var(--silver)}
+.dr .dvs{color:var(--muted);margin:0 8px;font-size:11px}
+.dr .w-a{color:var(--cyan-2);font-weight:700}
+.dr .w-b{color:var(--purple-2);font-weight:700}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -978,16 +994,34 @@ function renderH2H(){
         <td><span class="pp-career-fin ${fin(r.pb)}">${ordinal(r.pb)}</span></td>
         <td><span class="pp-career-fin ${r.win===a?'fin-1':'fin-2'}">${r.win}</span></td></tr>`).join("")}</tbody>
     </table></div>` : `<div class="h2h-note">These two never played the same season.</div>`;
+  // comparison across shared seasons + all-time
+  const finsA=shared.map(x=>x.pa), finsB=shared.map(x=>x.pb);
+  const avg=arr=>arr.length?arr.reduce((x,y)=>x+y,0)/arr.length:null;
+  const avgA=avg(finsA), avgB=avg(finsB);
+  const bestA=finsA.length?Math.min(...finsA):null, bestB=finsB.length?Math.min(...finsB):null;
+  const titA=titles(rowA), titB=titles(rowB);
+  const cmp=(label,va,vb,aw2,bw2,fmt)=>`<div class="cmp"><span class="v va ${aw2?'win':''}">${va==null?'-':fmt(va)}</span><span class="k">${label}</span><span class="v vb ${bw2?'win':''}">${vb==null?'-':fmt(vb)}</span></div>`;
+  const compare = shared.length ? `<div class="h2h-compare">
+    ${cmp("Avg finish", avgA, avgB, avgA!=null&&avgB!=null&&avgA<avgB, avgA!=null&&avgB!=null&&avgB<avgA, v=>v.toFixed(1))}
+    ${cmp("Best finish", bestA, bestB, bestA!=null&&bestB!=null&&bestA<bestB, bestA!=null&&bestB!=null&&bestB<bestA, v=>ordinal(v))}
+    ${cmp("Titles", titA, titB, titA>titB, titB>titA, v=>v)}
+  </div>` : "";
+  // current-season tournament duels
   const inTeam=(by,n)=>(by||"").split(" + ").map(x=>x.trim()).includes(n);
-  let taw=0, tbw=0, tsh=0;
+  const duels=[];
   (CUR_TOURNAMENTS||[]).forEach(t=>{
     const tA=t.teams.find(tm=>inTeam(tm.by,a)), tB=t.teams.find(tm=>inTeam(tm.by,b));
     if(!tA||!tB||tA===tB||tA.place==null||tB.place==null) return;
-    tsh++; if(tA.place<tB.place) taw++; else if(tB.place<tA.place) tbw++;
+    duels.push({name:t.name, date:t.date, pa:tA.place, pb:tB.place, ca:tA.club, cb:tB.club, win:tA.place<tB.place?a:b, idx:t.idx});
   });
+  duels.sort((x,y)=> tournKey(y.date)-tournKey(x.date) || (y.idx||0)-(x.idx||0));
+  const taw=duels.filter(d=>d.win===a).length, tbw=duels.filter(d=>d.win===b).length, tsh=duels.length;
   const sub = tsh ? `<div class="h2h-sub"><span class="lab">This season</span><span class="t"><span class="a">${taw}</span> <span class="sep">-</span> <span class="b">${tbw}</span></span><span class="lab">${tsh} event${tsh===1?'':'s'}</span></div>` : "";
+  const duelsHtml = tsh ? `<div class="perf-head">This season's meetings <span>tournaments where they were on different teams</span></div>
+    <div class="h2h-duels">${duels.map(d=>`<div class="duel"><div class="dn">${tr(d.name)}<span class="dd">${d.date}</span></div><div class="dr"><span class="${d.win===a?'w-a':''}">${d.ca} ${ordinal(d.pa)}</span><span class="dvs">vs</span><span class="${d.win===b?'w-b':''}">${d.cb} ${ordinal(d.pb)}</span></div></div>`).join("")}</div>` : "";
   el.innerHTML = `<div class="h2h-score">${team(a,'a')}<div class="h2h-tally"><span class="a">${aw}</span><span class="sep">-</span><span class="b">${bw}</span></div>${team(b,'b')}</div>
-    <div class="h2h-note">${shared.length} shared season${shared.length===1?'':'s'} \u2014 who finished ahead by final table</div>${sub}${table}`;
+    <div class="h2h-note">${shared.length} shared season${shared.length===1?'':'s'} \u2014 who finished ahead by final table</div>
+    ${compare}${table}${sub}${duelsHtml}`;
 }
 function fillH2H(){
   const a=document.getElementById("h2h-a"), b=document.getElementById("h2h-b"); if(!a||!b) return;
