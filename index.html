@@ -288,6 +288,19 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .rec-lab{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 .rec-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;margin-top:8px}
 .rec-val{font-family:'Nunito',sans-serif;font-weight:800;color:var(--cyan-2);font-size:13px;margin-top:3px}
+.h2h-pick{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:24px}
+.h2h-sel{appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--line);color:var(--white);font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;padding:12px 18px;border-radius:12px;cursor:pointer;min-width:170px}
+.h2h-sel:hover{border-color:var(--cyan)}
+.h2h-vs{font-family:'Fredoka',sans-serif;font-weight:600;color:var(--muted);font-size:16px}
+.h2h-score{display:flex;align-items:center;justify-content:center;gap:22px;margin:6px 0 20px;flex-wrap:wrap}
+.h2h-team{text-align:center;flex:1 1 0;min-width:130px}
+.h2h-team .ph{width:88px;height:88px;border-radius:14px;object-fit:cover;border:1px solid var(--line);margin:0 auto 10px;display:block}
+.h2h-team .nm2{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px}
+.h2h-team .nm2.a{color:var(--cyan-2)}.h2h-team .nm2.b{color:var(--purple-2)}
+.h2h-team .sub{color:var(--muted);font-size:12px;font-family:'Nunito',sans-serif;margin-top:2px}
+.h2h-tally{font-family:'Fredoka',sans-serif;font-weight:600;font-size:46px;white-space:nowrap;flex:0 0 auto}
+.h2h-tally .a{color:var(--cyan-2)}.h2h-tally .b{color:var(--purple-2)}.h2h-tally .sep{color:var(--muted);margin:0 8px}
+.h2h-note{text-align:center;color:var(--muted);font-size:13px;font-family:'Nunito',sans-serif;margin-bottom:16px}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -320,6 +333,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
       <a href="#tournaments">Tournaments</a>
       <a href="#squad">Squad</a>
       <a href="#alltime">All-Time</a>
+      <a href="#h2h">H2H</a>
       <a href="#history">History</a>
       <a href="#gallery">Gallery</a>
     </nav>
@@ -414,9 +428,19 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
   <div class="records" id="records"></div>
 </section>
 
+<section id="h2h" class="wrap reveal">
+  <div class="sec-head"><div class="idx">05 / HEAD TO HEAD</div><div class="sec-title"><h2>Head to Head</h2><p>Pick two competitors and see who finished ahead, season by season.</p></div></div>
+  <div class="h2h-pick">
+    <select id="h2h-a" class="h2h-sel"></select>
+    <span class="h2h-vs">vs</span>
+    <select id="h2h-b" class="h2h-sel"></select>
+  </div>
+  <div id="h2h-result"></div>
+</section>
+
 <section id="history" class="wrap reveal">
   <div class="sec-head">
-    <div class="idx">05 / HALL OF FAME</div>
+    <div class="idx">06 / HALL OF FAME</div>
     <div class="sec-title"><h2>History</h2><p>Champion and Player of the Season for every completed year.</p></div>
   </div>
   <div class="honours" id="honours"></div>
@@ -424,7 +448,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 
 <section id="gallery" class="wrap reveal">
   <div class="sec-head">
-    <div class="idx">06 / GALLERY</div>
+    <div class="idx">07 / GALLERY</div>
     <div class="sec-title"><h2>Gallery</h2><p>Moments from the crew, shuffled fresh on every visit.</p></div>
   </div>
   <div class="gallery-grid" id="gallery-grid"></div>
@@ -907,6 +931,45 @@ function renderSquad(){
     </a>`;
   }).join("");
 }
+function renderH2H(){
+  const el=document.getElementById("h2h-result"); if(!el) return;
+  const a=document.getElementById("h2h-a").value, b=document.getElementById("h2h-b").value;
+  const rows=VECNA.rows||[];
+  const rowA=rows.find(r=>r.name===a), rowB=rows.find(r=>r.name===b);
+  if(!rowA||!rowB){ el.innerHTML=""; return; }
+  if(a===b){ el.innerHTML=`<div class="h2h-note">Pick two different competitors.</div>`; return; }
+  let aw=0, bw=0; const shared=[];
+  (VECNA.seasons||[]).forEach((yr,i)=>{
+    const pa=rowA.places[i], pb=rowB.places[i];
+    if(pa==null||pb==null) return;
+    const win = pa<pb ? a : b; if(win===a) aw++; else bw++;
+    shared.push({yr,pa,pb,win});
+  });
+  const rank = n => rows.findIndex(r=>r.name===n)+1;
+  const titles = row => row.places.filter(p=>p===1).length;
+  const fin = p => p===1?"fin-1":p===2?"fin-2":p===3?"fin-3":(p<=6?"fin-m":"fin-l");
+  const team = (nick,cls) => `<div class="h2h-team">${IMG[nick]?`<img class="ph" src="${IMG[nick]}" alt="${nick}">`:""}<div class="nm2 ${cls}">${nick}</div><div class="sub">All-Time #${rank(nick)} \u00b7 ${titles(nick===a?rowA:rowB)} ${titles(nick===a?rowA:rowB)===1?'title':'titles'}</div></div>`;
+  const table = shared.length ? `<div class="table-card" style="margin-top:6px"><table>
+      <thead><tr><th class="name">Season</th><th>${a}</th><th>${b}</th><th>Ahead</th></tr></thead>
+      <tbody>${shared.slice().reverse().map(r=>`<tr>
+        <td class="name-cell"><span class="nm">${(SEASON_GIDS[r.yr]||LEGACY_GID[r.yr])?`<a href="#season-${r.yr}" class="nm-link">${r.yr}</a>`:r.yr}</span></td>
+        <td><span class="pp-career-fin ${fin(r.pa)}">${ordinal(r.pa)}</span></td>
+        <td><span class="pp-career-fin ${fin(r.pb)}">${ordinal(r.pb)}</span></td>
+        <td><span class="pp-career-fin ${r.win===a?'fin-1':'fin-2'}">${r.win}</span></td></tr>`).join("")}</tbody>
+    </table></div>` : `<div class="h2h-note">These two never played the same season.</div>`;
+  el.innerHTML = `<div class="h2h-score">${team(a,'a')}<div class="h2h-tally"><span class="a">${aw}</span><span class="sep">-</span><span class="b">${bw}</span></div>${team(b,'b')}</div>
+    <div class="h2h-note">${shared.length} shared season${shared.length===1?'':'s'} \u2014 who finished ahead</div>${table}`;
+}
+function fillH2H(){
+  const a=document.getElementById("h2h-a"), b=document.getElementById("h2h-b"); if(!a||!b) return;
+  const names=(VECNA.rows||[]).map(r=>r.name);
+  const opts=names.map(n=>`<option>${n}</option>`).join("");
+  const av=a.value, bv=b.value;
+  a.innerHTML=opts; b.innerHTML=opts;
+  a.value = names.includes(av)?av:(names[0]||"");
+  b.value = names.includes(bv)?bv:(names[1]||names[0]||"");
+  renderH2H();
+}
 function renderRecords(){
   const el=document.getElementById("records"); if(!el) return;
   const rows=(VECNA.rows||[]); if(!rows.length){ el.innerHTML=""; return; }
@@ -1291,7 +1354,7 @@ async function tryLiveVecna(){
   renderAllTime(data);
   const champs = championsFromVecna(data);
   HONOURS.forEach(h=>{ if(champs[h.yr]) h.champ = champs[h.yr]; });
-  renderHonours(); renderSquad(); renderRecords(); computeKitColors();
+  renderHonours(); renderSquad(); renderRecords(); fillH2H(); computeKitColors();
 }
 
 /* ---------- LIVE: Player of the Season = first on each season's performances feed ----------
@@ -1335,6 +1398,9 @@ document.getElementById("alltime-table").innerHTML = `<tbody><tr><td class="load
 renderSquad();
 renderHonours();
 renderRecords();
+fillH2H();
+document.getElementById("h2h-a").addEventListener("change", renderH2H);
+document.getElementById("h2h-b").addEventListener("change", renderH2H);
 
 /* try live, each part independent and quiet on failure. POTS deferred slightly. */
 tryLiveTable().catch(()=>console.info("Standings not loaded."));
