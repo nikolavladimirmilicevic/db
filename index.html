@@ -339,6 +339,10 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .dr .dvs{color:var(--muted);margin:0 8px;font-size:11px}
 .dr .w-a{color:var(--cyan-2);font-weight:700}
 .dr .w-b{color:var(--purple-2);font-weight:700}
+.race-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px 14px;overflow-x:auto}
+.race-svg{width:100%;min-width:580px;height:auto;display:block}
+.race-ax{fill:var(--muted);font-family:'Nunito',sans-serif;font-size:10px}
+.race-lbl{font-family:'Fredoka',sans-serif;font-weight:600;font-size:12.5px}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -427,6 +431,8 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
   <div class="perf-head">Top Performances <span>best single games by goals and assists</span></div>
   <div class="table-card" id="scorers"></div>
   <button class="see-all" id="scorers-more" hidden></button>
+  <div class="perf-head">Season Race <span>cumulative points through the season’s tournaments</span></div>
+  <div class="race-wrap" id="race-chart"></div>
 </section>
 
 
@@ -948,6 +954,7 @@ async function computeKitColors(){
   feats.forEach((f,i)=> KIT_COLOR[f.nick] = PALETTE[best.perm[i]].hex);
   renderSquad();
   if(LAST_STANDINGS) renderStandings(LAST_STANDINGS);
+  renderRace();
 }
 function renderSquad(){
   const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
@@ -969,6 +976,32 @@ function renderSquad(){
       </div>
     </a>`;
   }).join("");
+}
+function renderRace(){
+  const el=document.getElementById("race-chart"); if(!el) return;
+  const players=(typeof SQUAD!=="undefined"?SQUAD:[]).map(p=>p.nick);
+  const tourns=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(a.date)-tournKey(b.date) || (a.idx||0)-(b.idx||0));
+  if(!tourns.length){ el.innerHTML=`<div class="loading-cell">The race chart appears once tournaments are played.</div>`; return; }
+  const inTeam=(by,n)=>(by||"").split(" + ").map(x=>x.trim()).includes(n);
+  const totals={}, series={}; players.forEach(p=>{ totals[p]=0; series[p]=[0]; });
+  tourns.forEach(t=>{ players.forEach(p=>{ const tm=t.teams.find(x=>inTeam(x.by,p)); if(tm) totals[p]+=(tm.points||0); series[p].push(totals[p]); }); });
+  const N=tourns.length;
+  const W=860,H=360,L=52,R=84,T=18,Bt=30;
+  const maxY=Math.max(1, ...players.flatMap(p=>series[p]));
+  const X=i=> L + (N<=0?0:(i/N)*(W-L-R));
+  const Y=v=> (H-Bt) - (v/maxY)*(H-T-Bt);
+  const grid=[0,.25,.5,.75,1].map(fr=>{ const v=Math.round(maxY*fr), yy=Y(v);
+    return `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${yy+4}" text-anchor="end" class="race-ax">${nf(v)}</text>`; }).join("");
+  // rank end labels to reduce overlap
+  const ends=players.map(p=>({p, v:series[p][series[p].length-1]})).sort((a,b)=>b.v-a.v);
+  let lastY=-99; const endLbl=ends.map(e=>{ let yy=Y(e.v); if(yy-lastY<14) yy=lastY+14; lastY=yy;
+    return `<text x="${X(N)+9}" y="${yy+4}" class="race-lbl" fill="${kitColor(e.p)}">${e.p}</text>`; }).join("");
+  const lines=players.map(p=>{
+    const pts=series[p].map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+    const lastV=series[p][series[p].length-1];
+    return `<polyline points="${pts}" fill="none" stroke="${kitColor(p)}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(N).toFixed(1)}" cy="${Y(lastV).toFixed(1)}" r="3.6" fill="${kitColor(p)}"/>`;
+  }).join("");
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="race-svg" preserveAspectRatio="xMidYMid meet">${grid}${lines}${endLbl}</svg>`;
 }
 function renderH2H(){
   const el=document.getElementById("h2h-result"); if(!el) return;
@@ -1110,7 +1143,7 @@ function renderTournaments(list, target="tourns", opts={}){
         </div>`;
       }).join("")}
     </div>`).join("");
-  if(target==="tourns"){ setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6); CUR_TOURNAMENTS = list; if(document.getElementById("h2h-result")) renderH2H(); }
+  if(target==="tourns"){ setupCollapse(document.getElementById("tourns"), sorted.length, document.getElementById("tourns-more"), 6); CUR_TOURNAMENTS = list; if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
 }
 /* points breakdown: two-row header (months spanning + sub-codes), like the sheet */
 /* is a breakdown column still italic (defended from last season, not yet resolved)? */
