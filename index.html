@@ -390,6 +390,16 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .fb-name{font-family:'Nunito',sans-serif;font-weight:700;font-size:13px}
 .fb-pos{font-family:'Nunito',sans-serif;font-size:9.5px;letter-spacing:.08em;color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
 .fb-r{font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;color:var(--cyan-2)}
+.xi-pitch{border:1px solid var(--line);border-radius:16px;background:linear-gradient(to top,rgba(0,150,90,.10),rgba(40,40,110,.05)),var(--surface);padding:24px 12px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.xi-pitch::before{content:"";position:absolute;left:6%;right:6%;top:0;bottom:0;border:1px solid rgba(255,255,255,.05);border-radius:10px;pointer-events:none}
+.xi-row{display:flex;justify-content:space-around;align-items:center;gap:8px;position:relative;z-index:1}
+.xi-player{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;flex:0 1 auto;cursor:default}
+.xi-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:11px;box-shadow:0 3px 12px rgba(6,4,20,.45)}
+.xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--white)}
+.xi-GK .xi-dot{background:var(--silver);color:var(--ink)}
+.xi-DF .xi-dot{background:#2f66d6;color:#fff}
+.xi-MF .xi-dot{background:var(--cyan);color:var(--ink)}
+.xi-FW .xi-dot{background:#f23e50;color:#fff}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -1828,17 +1838,37 @@ function renderPlayer(nick){
   // this season: clubs used + footballers fielded (from current tournaments)
   const inTeam=(by,n)=>(by||"").split(" + ").map(x=>x.trim()).includes(n);
   const myT=(CUR_TOURNAMENTS||[]).filter(t=>t.teams.some(tm=>inTeam(tm.by,nick)));
-  const clubs={}, fbs={};
-  myT.forEach(t=>{ const tm=t.teams.find(x=>inTeam(x.by,nick)); if(!tm) return;
-    const c=tm.club||"?"; (clubs[c]=clubs[c]||{n:0,best:99}); clubs[c].n++; if(tm.place!=null&&tm.place<clubs[c].best) clubs[c].best=tm.place;
-    (tm.best||[]).forEach(b=>{ if(!b||!b.name) return; (fbs[b.name]=fbs[b.name]||{n:0,r:0,pos:b.pos}); fbs[b.name].n++; const rr=parseFloat(b.rating)||0; if(rr>fbs[b.name].r) fbs[b.name].r=rr; }); });
+  const clubs={}, fbStats={};
+  myT.forEach(t=>{ const tm=t.teams.find(x=>inTeam(x.by,nick)); if(!tm) return; const pl=tm.place;
+    const c=tm.club||"?"; (clubs[c]=clubs[c]||{n:0,best:99}); clubs[c].n++; if(pl!=null&&pl<clubs[c].best) clubs[c].best=pl;
+    (tm.best||[]).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=b.name+"|"+b.pos;
+      const st=fbStats[k]=fbStats[k]||{name:b.name, pos:b.pos, g:[0,0,0,0,0,0,0], apps:0, rSum:0, rN:0};
+      st.apps++; if(pl>=1&&pl<=7) st.g[pl-1]++; const rr=parseFloat(b.rating); if(!isNaN(rr)){ st.rSum+=rr; st.rN++; } }); });
   const clubArr=Object.entries(clubs).map(([c,v])=>({c,...v})).sort((a,b)=>b.n-a.n||a.best-b.best);
-  const fbArr=Object.entries(fbs).map(([nm,v])=>({nm,...v})).sort((a,b)=>b.r-a.r||b.n-a.n).slice(0,12);
+  // Winning Eleven: rank footballers by golds, silvers, ... 7th, then avg rating, then apps
+  const fbList=Object.values(fbStats).map(x=>({...x, avg:x.rN?x.rSum/x.rN:0}));
+  const cmp=(a,b)=>{ for(let i=0;i<7;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; } if(b.avg!==a.avg) return b.avg-a.avg; return b.apps-a.apps; };
+  const byPos={GK:[],DF:[],MF:[],FW:[]};
+  fbList.forEach(x=>{ if(byPos[x.pos]) byPos[x.pos].push(x); });
+  Object.values(byPos).forEach(l=>l.sort(cmp));
+  const xi=[]; const take=(pos,n)=>{ for(let i=0;i<n && byPos[pos].length;i++) xi.push({...byPos[pos].shift(), slot:pos}); };
+  take("GK",1); take("DF",3); take("MF",3); take("FW",1);
+  const maxP={DF:5,MF:5,FW:3};
+  while(xi.length<11){ const c={DF:0,MF:0,FW:0}; xi.forEach(p=>{ if(c[p.slot]!=null) c[p.slot]++; });
+    let cands=[]; ["DF","MF","FW"].forEach(pos=>{ if(byPos[pos].length && c[pos]<maxP[pos]) cands.push(byPos[pos][0]); });
+    if(!cands.length) break; cands.sort(cmp); const pick=cands[0];
+    xi.push({...byPos[pick.pos].shift(), slot:pick.pos}); }
+  const rowFW=xi.filter(p=>p.slot==="FW"), rowMF=xi.filter(p=>p.slot==="MF"), rowDF=xi.filter(p=>p.slot==="DF"), rowGK=xi.filter(p=>p.slot==="GK");
+  const formation=`${rowDF.length}-${rowMF.length}-${rowFW.length}`;
+  const ord=["1st","2nd","3rd","4th","5th","6th","7th"];
+  const dot=(p)=>{ const parts=[]; p.g.forEach((n,i)=>{ if(n) parts.push(n+"\u00d7 "+ord[i]); });
+    const tip=`${p.apps} app${p.apps===1?'':'s'}${parts.length?" \u00b7 "+parts.join(", "):""}${p.avg?" \u00b7 avg "+p.avg.toFixed(1):""}`;
+    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}</div><div class="xi-nm">${p.name}</div></div>`; };
   let seasonHtml="";
+  if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI of footballers fielded this season \u00b7 ${formation}</span></div>`
+    + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row">${r.map(dot).join("")}</div>`).join("") + `</div>`;
   if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>sides picked and best finish</span></div><div class="club-list">`
     + clubArr.map(c=>`<div class="club-row"><span class="club-name">${c.c}</span><span class="club-meta">${c.n}\u00d7 \u00b7 best ${c.best<99?ordinal(c.best):"-"}</span></div>`).join("") + `</div>`;
-  if(fbArr.length) seasonHtml += `<div class="perf-head">Top-rated players <span>best match ratings in their squads this season</span></div><div class="fb-list">`
-    + fbArr.map(x=>`<div class="fb-chip">${x.pos?`<span class="fb-pos">${x.pos}</span>`:""}<span class="fb-name">${x.nm}</span>${x.r?`<span class="fb-r">${x.r.toFixed(1)}</span>`:""}</div>`).join("") + `</div>`;
   document.getElementById("pp-season").innerHTML = seasonHtml;
 }
 function sharePlayer(btn){
