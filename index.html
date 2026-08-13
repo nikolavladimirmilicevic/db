@@ -392,10 +392,11 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .fb-r{font-family:'Fredoka',sans-serif;font-weight:600;font-size:12px;color:var(--cyan-2)}
 .xi-pitch{border:1px solid var(--line);border-radius:16px;background:linear-gradient(to top,rgba(0,150,90,.10),rgba(40,40,110,.05)),var(--surface);padding:24px 12px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
 .xi-pitch::before{content:"";position:absolute;left:6%;right:6%;top:0;bottom:0;border:1px solid rgba(255,255,255,.05);border-radius:10px;pointer-events:none}
-.xi-row{display:flex;justify-content:center;align-items:flex-start;gap:clamp(14px,5vw,46px);position:relative;z-index:1}
-.xi-player{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;flex:0 1 auto;cursor:default}
+.xi-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;max-width:440px;margin:0 auto;position:relative;z-index:1}
+.xi-row-solo{justify-content:center}
+.xi-player{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;flex:0 1 auto;cursor:default;text-align:center}
 .xi-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:11px;box-shadow:0 3px 12px rgba(6,4,20,.45)}
-.xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;max-width:92px;white-space:normal;line-height:1.2;color:var(--white)}
+.xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;max-width:84px;white-space:normal;line-height:1.2;color:var(--white)}
 .xi-GK .xi-dot{background:var(--silver);color:var(--ink)}
 .xi-DF .xi-dot{background:#2f66d6;color:#fff}
 .xi-MF .xi-dot{background:var(--cyan);color:var(--ink)}
@@ -1870,7 +1871,7 @@ function renderPlayer(nick){
     return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}</div><div class="xi-nm">${p.name}</div></div>`; };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI of footballers fielded this season \u00b7 ${formation}</span></div>`
-    + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row">${r.map(dot).join("")}</div>`).join("") + `</div>`;
+    + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}">${r.map(dot).join("")}</div>`).join("") + `</div>`;
   if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>sides picked and best finish</span></div><div class="club-list">`
     + clubArr.map(c=>`<div class="club-row"><span class="club-name">${c.c}</span><span class="club-meta">${c.n}\u00d7 \u00b7 best ${c.best<99?ordinal(c.best):"-"}</span></div>`).join("") + `</div>`;
   document.getElementById("pp-season").innerHTML = seasonHtml;
