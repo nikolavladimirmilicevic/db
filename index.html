@@ -161,6 +161,8 @@ footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
 .perf thead th{font-family:'Nunito',sans-serif;font-weight:600;text-transform:uppercase;font-size:10.5px;letter-spacing:.13em;color:var(--silver);text-align:center;padding:14px 8px;border-bottom:2px solid rgba(170,160,220,.28);background:rgba(14,10,32,.35)}
 .perf thead th.name{text-align:left;padding-left:22px}
 .perf tbody td{padding:12px 8px;text-align:center;border-bottom:1px solid rgba(170,160,220,.11)}
+.perf th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+.perf th.sortable:hover{color:var(--cyan-2)}
 .perf tbody tr:last-child td{border-bottom:none}
 .perf tbody tr{transition:background .18s}
 .perf tbody tr:hover{background:rgba(0,184,232,.05)}
@@ -717,6 +719,8 @@ let KIT_COLOR = {};
 let LAST_STANDINGS = null;
 let CUR_TOURNAMENTS = [];
 let RACE = null;
+let SCORERS_LIST = [];
+let SCORER_SORT = {key:"tot", dir:-1};
 const HONOURS = [
   {yr:2026, champ:"?", pots:"?", current:true},
   {yr:2025, champ:"Mili",  pots:"Erling Haaland (Golranče)"},
@@ -856,8 +860,24 @@ function renderStandings(rows, target="standings"){
     </tr>`;
   }).join("");
 }
+function scorerSort(key){
+  if(SCORER_SORT.key===key) SCORER_SORT.dir*=-1;
+  else SCORER_SORT={key, dir:(key==="player"||key==="by"||key==="date")?1:-1};
+  renderScorersView();
+}
+function renderScorersView(){
+  const {key,dir}=SCORER_SORT, txt=(key==="player"||key==="by");
+  const sorted=[...SCORERS_LIST].sort((a,b)=>{
+    if(key==="date") return dir*(tournKey(a.date)-tournKey(b.date));
+    if(txt){ const av=(a[key]||"").toLowerCase(), bv=(b[key]||"").toLowerCase(); return dir*(av<bv?-1:av>bv?1:0); }
+    return dir*((a[key]||0)-(b[key]||0));
+  });
+  renderScorers(sorted, "scorers", {date:true, sortable:true, sort:SCORER_SORT});
+}
 function renderScorers(list, target="scorers", opts={}){
-  const d = !!opts.date;
+  const d = !!opts.date, sortable = !!opts.sortable, st = opts.sort||null;
+  const arr = key => (sortable && st && st.key===key) ? (st.dir<0?" \u25be":" \u25b4") : "";
+  const th = (key,label,cls) => sortable ? `<th class="${cls?cls+' ':''}sortable" onclick="scorerSort('${key}')">${label}${arr(key)}</th>` : `<th${cls?` class="${cls}"`:""}>${label}</th>`;
   const body = list.map((s,i)=>`
     <tr>
       <td class="pos ${i===0?'p1':''}">${i+1}</td>
@@ -870,7 +890,7 @@ function renderScorers(list, target="scorers", opts={}){
     </tr>`).join("");
   document.getElementById(target).innerHTML = `
     <table class="perf">
-      <thead><tr><th>#</th>${d?`<th class="hide">Date</th>`:""}<th class="name">Player</th><th class="hide">By</th><th class="hide">G</th><th class="hide">A</th><th>&Sigma;</th></tr></thead>
+      <thead><tr><th>#</th>${d?th("date","Date","hide"):""}${th("player","Player","name")}${th("by","By","hide")}${th("g","G","hide")}${th("a","A","hide")}${th("tot","&Sigma;")}</tr></thead>
       <tbody>${body}</tbody>
     </table>`;
   if(target==="scorers") setupCollapse(document.querySelector("#scorers .perf"), list.length, document.getElementById("scorers-more"));
@@ -1428,7 +1448,7 @@ async function tryLiveScorers(){
   if(!res.ok) throw new Error("scorers unavailable");
   const list = parse26i(await res.text());
   if(!list.length) throw new Error("no performances");
-  renderScorers(list);
+  SCORERS_LIST = list; renderScorersView();
   const surname = p => p.player.split(" ").pop();
   const topTotal   = list[0];
   const topGoals   = [...list].sort((a,b)=>b.g-a.g)[0];
@@ -1593,7 +1613,7 @@ setTimeout(()=>{
   const still = id => document.querySelector("#"+id+" .loading-cell");
   if(still("standings")){ renderStandings(applyTournamentStats(SAMPLE_STANDINGS, SAMPLE_TOURNAMENTS)); setLeader(SAMPLE_STANDINGS); }
   if(still("scorers")){
-    renderScorers(SAMPLE_PERFORMANCES);
+    SCORERS_LIST = SAMPLE_PERFORMANCES; renderScorersView();
     const surname = p => p.player.split(" ").pop();
     const tt=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.tot-a.tot)[0], tg=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.g-a.g)[0], ta=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.a-a.a)[0];
     document.getElementById("sb-scorer").innerHTML = `${tg===tt?SB_STAR:""}${surname(tg)} <small>${tg.g}</small>`;
