@@ -1847,10 +1847,11 @@ function renderPlayer(nick){
       st.apps++; st.pts+=pts; if(pl!=null&&pl<st.best) st.best=pl; const rr=parseFloat(b.rating); if(!isNaN(rr)){ st.rSum+=rr; st.rN++; } }); });
   const clubArr=Object.entries(clubs).map(([c,v])=>({c,...v})).sort((a,b)=>b.n-a.n||a.best-b.best);
   // Top Performances ranks for this competitor's footballers (26i is footballer performances)
+  const nn = str => (str||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
   const tpSorted=[...(SCORERS_LIST||[])].sort((a,b)=>b.tot-a.tot), tpRank={};
-  tpSorted.forEach((e,i)=>{ if(!inTeam(e.by,nick)) return; const rk=i+1; if(tpRank[e.player]==null||rk<tpRank[e.player]) tpRank[e.player]=rk; });
+  tpSorted.forEach((e,i)=>{ if(!inTeam(e.by,nick)) return; const k=nn(e.player); const rk=i+1; if(tpRank[k]==null||rk<tpRank[k]) tpRank[k]=rk; });
   // Winning Eleven: points won, then best finish, then Top Performances rank, then rating
-  const fbList=Object.values(fbStats).map(x=>({...x, avg:x.rN?x.rSum/x.rN:0, tp:(tpRank[x.name]!=null?tpRank[x.name]:Infinity)}));
+  const fbList=Object.values(fbStats).map(x=>({...x, avg:x.rN?x.rSum/x.rN:0, tp:(tpRank[nn(x.name)]!=null?tpRank[nn(x.name)]:Infinity)}));
   const cmp=(a,b)=> (b.pts-a.pts) || (a.best-b.best) || (a.tp-b.tp) || (b.avg-a.avg);
   const byPos={GK:[],DF:[],MF:[],FW:[]};
   fbList.forEach(x=>{ if(byPos[x.pos]) byPos[x.pos].push(x); });
