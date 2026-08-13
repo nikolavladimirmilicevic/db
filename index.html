@@ -290,6 +290,8 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .pp-role{font-family:'Nunito',sans-serif;color:var(--cyan-2);font-weight:700;margin-top:8px;font-size:15px}
 .pp-trophies{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--cyan-2)}
 .pp-trophies .none{color:var(--muted);font-style:italic;font-size:14px}
+.share-btn{background:transparent;border:1px solid var(--line);color:var(--silver);font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:border-color .2s,color .2s;margin-top:16px}
+.share-btn:hover{border-color:var(--cyan);color:var(--cyan-2)}
 .pp-career-fin{font-weight:800}
 .fin-1{color:var(--cyan-2)}.fin-2{color:var(--purple-2)}.fin-3{color:var(--cyan)}.fin-m{color:var(--silver)}.fin-l{color:var(--muted)}
 .records{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
@@ -619,6 +621,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
         </div>
       </div>
       <div class="sp-meta" id="pp-stats"></div>
+      <button class="share-btn" onclick="sharePlayer(this)">Share profile</button>
     </div>
   </div>
   <section class="wrap">
@@ -1811,6 +1814,14 @@ function renderPlayer(nick){
   const T='<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>';
   document.getElementById("pp-trophies").innerHTML = titles>0 ? T.repeat(titles) : `<span class="none">No league titles yet.</span>`;
   document.getElementById("pp-trophy-sub").textContent = titles===1 ? "1 league title" : titles+" league titles";
+}
+function sharePlayer(btn){
+  const nick=(document.getElementById("pp-nick")||{}).textContent||"";
+  const url=location.href;
+  if(navigator.share){ navigator.share({title:nick+" \u2014 Deaf Boys League", text:"Check out "+nick+" on the Deaf Boys League", url}).catch(()=>{}); return; }
+  const done=()=>{ const o=btn.textContent; btn.textContent="Link copied!"; setTimeout(()=>{btn.textContent=o;},1600); };
+  const fb=()=>{ const ta=document.createElement("textarea"); ta.value=url; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy"); done();}catch(e){} document.body.removeChild(ta); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(fb); } else fb();
 }
 function showPlayer(nick){
   document.getElementById("home").hidden = true;
