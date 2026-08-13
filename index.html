@@ -1082,7 +1082,7 @@ function renderRace(){
   const sp=(W-L-R)/Math.max(1,N);
   let zones=""; for(let i=1;i<=N;i++){ const xx=X(i); zones+=`<rect class="race-zone" x="${(xx-sp/2).toFixed(1)}" y="${T}" width="${sp.toFixed(1)}" height="${(H-Bt-T).toFixed(1)}" fill="transparent" onmouseover="raceTip(${i})" onmouseout="raceTipOut()"/>`; }
   RACE={X,Y,tourns,players,series,delta,part,W,H,T,Bt};
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="race-svg" preserveAspectRatio="xMidYMid meet">${grid}${xlab}${lines}${dots}${endLbl}<g id="race-tip"></g>${zones}</svg>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="race-svg" preserveAspectRatio="xMidYMid meet" ontouchstart="raceTouch(event)" ontouchmove="raceTouch(event)">${grid}${xlab}${lines}${dots}${endLbl}<g id="race-tip"></g>${zones}</svg>`;
 }
 function raceTip(i){
   if(!RACE) return; const {X,Y,tourns,players,series,delta,part,W,H,T,Bt}=RACE;
@@ -1102,6 +1102,15 @@ function raceTip(i){
   g.innerHTML=out;
 }
 function raceTipOut(){ const g=document.getElementById("race-tip"); if(g) g.innerHTML=""; }
+function raceTouch(evt){
+  if(!RACE) return; const t=evt.touches&&evt.touches[0]; if(!t) return;
+  const svg=evt.currentTarget, rect=svg.getBoundingClientRect();
+  if(!rect.width) return;
+  const sx=((t.clientX-rect.left)/rect.width)*RACE.W;
+  let best=1, bd=Infinity;
+  for(let i=1;i<=RACE.tourns.length;i++){ const d=Math.abs(RACE.X(i)-sx); if(d<bd){ bd=d; best=i; } }
+  raceTip(best);
+}
 function renderH2H(){
   const el=document.getElementById("h2h-result"); if(!el) return;
   const a=document.getElementById("h2h-a").value, b=document.getElementById("h2h-b").value;
