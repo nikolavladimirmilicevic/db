@@ -364,6 +364,20 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .tf-chip.active{background:var(--cyan);border-color:var(--cyan);color:var(--ink)}
 .tf-player{appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--line);color:var(--white);font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;padding:9px 18px;border-radius:999px;cursor:pointer}
 .tf-player:hover{border-color:var(--cyan)}
+.latest-card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,var(--surface),var(--ink-2));padding:18px 22px;margin-bottom:20px;box-shadow:var(--shadow)}
+.latest-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.latest-lab{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan-2);font-weight:800}
+.latest-cat{font-family:'Nunito',sans-serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-weight:700}
+.latest-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:20px}
+.latest-date{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted);margin-left:auto}
+.latest-podium{display:flex;gap:10px;flex-wrap:wrap}
+.lp{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid var(--line);flex:1 1 200px;min-width:0}
+.lp-pos{font-family:'Fredoka',sans-serif;font-weight:600;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto}
+.lp-1 .lp-pos{background:var(--cyan);color:var(--ink)}
+.lp-2 .lp-pos{background:var(--purple-2);color:var(--ink)}
+.lp-3 .lp-pos{background:var(--steel);color:var(--white)}
+.lp-club{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lp-by{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -426,6 +440,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
     <div class="idx">01 / RANKING</div>
     <div class="sec-title"><h2>Current Season</h2><p>An ATP style points race. Finish high in each month's tournaments and the total climbs.</p></div>
   </div>
+  <div id="latest"></div>
   <div class="legend">
     <span class="tier"><b>Monthly</b>&nbsp; 1000 / 600 / 360</span>
     <span class="tier q"><b>Quarterly</b>&nbsp; 2000 / 1200 / 720</span>
@@ -1028,6 +1043,24 @@ function renderSquad(){
   }).join("");
 }
 let TOURN_FILTER = {cat:"all", player:"all"};
+function renderLatest(){
+  const el=document.getElementById("latest"); if(!el) return;
+  const list=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(b.date)-tournKey(a.date) || (b.idx||0)-(a.idx||0));
+  const t=list[0]; if(!t){ el.innerHTML=""; return; }
+  const catName={M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[t.catCode]||t.cat||"";
+  const podium=[...t.teams].filter(x=>x.place!=null).sort((a,b)=>a.place-b.place).slice(0,3);
+  const medal=p=>p===1?"lp-1":p===2?"lp-2":"lp-3";
+  const rows=podium.map(x=>`<div class="lp ${medal(x.place)}"><span class="lp-pos">${x.place}</span><span class="lp-club">${x.club||""}</span><span class="lp-by">${x.by||""}</span></div>`).join("");
+  el.innerHTML=`<div class="latest-card">
+    <div class="latest-head">
+      <span class="latest-lab">Latest result</span>
+      <span class="latest-cat">${catName}</span>
+      <span class="latest-name">${tr(t.name)}</span>
+      <span class="latest-date">${t.date}</span>
+    </div>
+    <div class="latest-podium">${rows}</div>
+  </div>`;
+}
 function renderTournsView(){
   const el=document.getElementById("tourns"); if(!el) return;
   let list=(CUR_TOURNAMENTS||[]).slice();
@@ -1526,7 +1559,7 @@ function parse26tu(csvText){
 async function tryLiveTournaments(){
   const list = await loadTournaments();
   if(!list.length) throw new Error("no tournaments");
-  CUR_TOURNAMENTS = list; renderTournsView();
+  CUR_TOURNAMENTS = list; renderTournsView(); renderLatest();
   if(document.getElementById("h2h-result")) renderH2H(); renderRace();
 }
 
@@ -1634,7 +1667,7 @@ setTimeout(()=>{
     document.getElementById("sb-scorer").innerHTML = `${tg===tt?SB_STAR:""}${surname(tg)} <small>${tg.g}</small>`;
     document.getElementById("sb-assist").innerHTML = `${ta===tt?SB_STAR:""}${surname(ta)} <small>${ta.a}</small>`;
   }
-  if(still("tourns")){ CUR_TOURNAMENTS = SAMPLE_TOURNAMENTS; renderTournsView(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
+  if(still("tourns")){ CUR_TOURNAMENTS = SAMPLE_TOURNAMENTS; renderTournsView(); renderLatest(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
   if(still("alltime-table")){ renderAllTime(VECNA); }
 }, 3500);
 
