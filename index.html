@@ -1833,12 +1833,12 @@ function renderPlayer(nick){
     const c=tm.club||"?"; (clubs[c]=clubs[c]||{n:0,best:99}); clubs[c].n++; if(tm.place!=null&&tm.place<clubs[c].best) clubs[c].best=tm.place;
     (tm.best||[]).forEach(b=>{ if(!b||!b.name) return; (fbs[b.name]=fbs[b.name]||{n:0,r:0,pos:b.pos}); fbs[b.name].n++; const rr=parseFloat(b.rating)||0; if(rr>fbs[b.name].r) fbs[b.name].r=rr; }); });
   const clubArr=Object.entries(clubs).map(([c,v])=>({c,...v})).sort((a,b)=>b.n-a.n||a.best-b.best);
-  const fbArr=Object.entries(fbs).map(([nm,v])=>({nm,...v})).sort((a,b)=>b.n-a.n||b.r-a.r).slice(0,12);
+  const fbArr=Object.entries(fbs).map(([nm,v])=>({nm,...v})).sort((a,b)=>b.r-a.r||b.n-a.n).slice(0,12);
   let seasonHtml="";
   if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>sides picked and best finish</span></div><div class="club-list">`
     + clubArr.map(c=>`<div class="club-row"><span class="club-name">${c.c}</span><span class="club-meta">${c.n}\u00d7 \u00b7 best ${c.best<99?ordinal(c.best):"-"}</span></div>`).join("") + `</div>`;
-  if(fbArr.length) seasonHtml += `<div class="perf-head">Players fielded <span>standout footballers this season</span></div><div class="fb-list">`
-    + fbArr.map(x=>`<div class="fb-chip"><span class="fb-name">${x.nm}</span>${x.pos?`<span class="fb-pos">${x.pos}</span>`:""}${x.r?`<span class="fb-r">${x.r.toFixed(1)}</span>`:""}</div>`).join("") + `</div>`;
+  if(fbArr.length) seasonHtml += `<div class="perf-head">Top-rated players <span>best match ratings in their squads this season</span></div><div class="fb-list">`
+    + fbArr.map(x=>`<div class="fb-chip">${x.pos?`<span class="fb-pos">${x.pos}</span>`:""}<span class="fb-name">${x.nm}</span>${x.r?`<span class="fb-r">${x.r.toFixed(1)}</span>`:""}</div>`).join("") + `</div>`;
   document.getElementById("pp-season").innerHTML = seasonHtml;
 }
 function sharePlayer(btn){
