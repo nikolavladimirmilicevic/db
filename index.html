@@ -1623,7 +1623,7 @@ function renderPlayer(nick){
       rowsHtml.push(`<tr><td class="name-cell">${season}</td><td><span class="pp-career-fin ${fin(p)}">${ordinal(p)}</span></td></tr>`);
     });
   }
-  document.getElementById("pp-career").innerHTML = rowsHtml.length ? rowsHtml.slice().reverse().join("") : `<tr><td colspan="2" class="loading-cell">No career data.</td></tr>`;
+  document.getElementById("pp-career").innerHTML = rowsHtml.length ? rowsHtml.join("") : `<tr><td colspan="2" class="loading-cell">No career data.</td></tr>`;
   const cur = (LAST_STANDINGS||[]).find(r=>r.nick===nick);
   const inCur = CURRENT_PTS[nick]!=null;
   const card=(lab,val)=>`<div class="sp-card"><div class="lab">${lab}</div><div class="val">${val}</div></div>`;
