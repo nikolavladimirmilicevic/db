@@ -6,6 +6,12 @@
 <title>Deaf Boys League</title>
 <meta name="description" content="The Deaf Boys eFootball league: live standings, tournaments, all-time records and player profiles.">
 <meta name="theme-color" content="#201b45">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Deaf Boys">
 <meta property="og:title" content="Deaf Boys League">
 <meta property="og:description" content="Live standings, tournaments, all-time records and player profiles.">
 <meta property="og:type" content="website">
@@ -1809,6 +1815,9 @@ if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
     });
   });
 }
+</script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); }); }
 </script>
 </body>
 </html>
