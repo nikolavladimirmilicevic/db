@@ -344,6 +344,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .race-tip-d{fill:var(--muted);font-family:'Nunito',sans-serif;font-size:9.5px}
 .race-tip-r{fill:var(--silver);font-family:'Nunito',sans-serif;font-size:11px}
 .race-tip-v{fill:var(--white);font-family:'Fredoka',sans-serif;font-weight:600;font-size:11px}
+.race-tip-add{fill:var(--cyan-2);font-family:'Nunito',sans-serif;font-weight:700;font-size:10px}
 .race-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px 14px;overflow-x:auto}
 .race-svg{width:100%;min-width:580px;height:auto;display:block}
 .race-ax{fill:var(--muted);font-family:'Nunito',sans-serif;font-size:10px}
@@ -989,8 +990,9 @@ function renderRace(){
   const tourns=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(a.date)-tournKey(b.date) || (a.idx||0)-(b.idx||0));
   if(!tourns.length){ el.innerHTML=`<div class="loading-cell">The race chart appears once tournaments are played.</div>`; return; }
   const inTeam=(by,n)=>(by||"").split(" + ").map(x=>x.trim()).includes(n);
-  const totals={}, series={}; players.forEach(p=>{ totals[p]=0; series[p]=[0]; });
-  tourns.forEach(t=>{ players.forEach(p=>{ const tm=t.teams.find(x=>inTeam(x.by,p)); if(tm) totals[p]+=(tm.points||0); series[p].push(totals[p]); }); });
+  const totals={}, series={}, delta={}, part={};
+  players.forEach(p=>{ totals[p]=0; series[p]=[0]; delta[p]=[null]; part[p]=[false]; });
+  tourns.forEach(t=>{ players.forEach(p=>{ const tm=t.teams.find(x=>inTeam(x.by,p)); if(tm) totals[p]+=(tm.points||0); series[p].push(totals[p]); delta[p].push(tm?(tm.points||0):null); part[p].push(!!tm); }); });
   const N=tourns.length;
   const W=860,H=376,L=56,R=84,T=18,Bt=42;
   const rawMax=Math.max(1, ...players.flatMap(p=>series[p]));
@@ -1009,25 +1011,27 @@ function renderRace(){
   let lastY=-99; const endLbl=ends.map(e=>{ let yy=Y(e.v); if(yy-lastY<14) yy=lastY+14; lastY=yy;
     return `<text x="${X(N)+9}" y="${yy+4}" class="race-lbl" fill="${kitColor(e.p)}">${e.p}</text>`; }).join("");
   const lines=players.map(p=>`<polyline points="${series[p].map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="none" stroke="${kitColor(p)}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`).join("");
-  const dots=players.map(p=> series[p].map((v,i)=> i===0?"":`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.7" fill="${kitColor(p)}"/>`).join("")).join("");
+  const dots=players.map(p=> series[p].map((v,i)=> (i===0||!part[p][i])?"":`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.7" fill="${kitColor(p)}"/>`).join("")).join("");
   const sp=(W-L-R)/Math.max(1,N);
   let zones=""; for(let i=1;i<=N;i++){ const xx=X(i); zones+=`<rect class="race-zone" x="${(xx-sp/2).toFixed(1)}" y="${T}" width="${sp.toFixed(1)}" height="${(H-Bt-T).toFixed(1)}" fill="transparent" onmouseover="raceTip(${i})" onmouseout="raceTipOut()"/>`; }
-  RACE={X,Y,tourns,players,series,W,H,T,Bt};
+  RACE={X,Y,tourns,players,series,delta,part,W,H,T,Bt};
   el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="race-svg" preserveAspectRatio="xMidYMid meet">${grid}${xlab}${lines}${dots}${endLbl}<g id="race-tip"></g>${zones}</svg>`;
 }
 function raceTip(i){
-  if(!RACE) return; const {X,Y,tourns,players,series,W,H,T,Bt}=RACE;
+  if(!RACE) return; const {X,Y,tourns,players,series,delta,part,W,H,T,Bt}=RACE;
   const t=tourns[i-1], g=document.getElementById("race-tip"); if(!t||!g) return;
   const xx=X(i);
   let out=`<line x1="${xx.toFixed(1)}" y1="${T}" x2="${xx.toFixed(1)}" y2="${(H-Bt).toFixed(1)}" stroke="var(--cyan)" stroke-width="1.2" opacity=".5"/>`;
-  players.forEach(p=> out+=`<circle cx="${xx.toFixed(1)}" cy="${Y(series[p][i]).toFixed(1)}" r="4.5" fill="${kitColor(p)}" stroke="var(--ink)" stroke-width="1.6"/>`);
+  players.forEach(p=>{ if(part[p][i]) out+=`<circle cx="${xx.toFixed(1)}" cy="${Y(series[p][i]).toFixed(1)}" r="4.5" fill="${kitColor(p)}" stroke="var(--ink)" stroke-width="1.6"/>`; });
   const ranked=players.map(p=>({p,v:series[p][i]})).sort((a,b)=>b.v-a.v);
-  const nm=tr(t.name); const nmS=nm.length>20?nm.slice(0,19)+"\u2026":nm;
-  const lh=17, bw=162, bh=30+ranked.length*lh;
+  const nm=tr(t.name); const nmS=nm.length>26?nm.slice(0,25)+"\u2026":nm;
+  const lh=17, bw=196, headH=36, bh=headH+ranked.length*lh+8;
   let bx=xx+14; if(bx+bw>W-6) bx=xx-14-bw; if(bx<6) bx=6; const by=22;
   out+=`<rect x="${bx.toFixed(1)}" y="${by}" width="${bw}" height="${bh}" rx="9" fill="var(--ink-2)" stroke="var(--line)"/>`;
-  out+=`<text x="${(bx+12).toFixed(1)}" y="${by+17}" class="race-tip-h">${nmS}</text><text x="${(bx+bw-12).toFixed(1)}" y="${by+17}" text-anchor="end" class="race-tip-d">${t.date}</text>`;
-  ranked.forEach((r,k)=>{ const ry=by+32+k*lh; out+=`<circle cx="${(bx+15).toFixed(1)}" cy="${(ry-3.5).toFixed(1)}" r="4" fill="${kitColor(r.p)}"/><text x="${(bx+27).toFixed(1)}" y="${ry}" class="race-tip-r">${r.p}</text><text x="${(bx+bw-12).toFixed(1)}" y="${ry}" text-anchor="end" class="race-tip-v">${nf(r.v)}</text>`; });
+  out+=`<text x="${(bx+12).toFixed(1)}" y="${by+16}" class="race-tip-h">${nmS}</text><text x="${(bx+12).toFixed(1)}" y="${by+30}" class="race-tip-d">${t.date}</text>`;
+  ranked.forEach((r,k)=>{ const ry=by+headH+14+k*lh;
+    const d=delta[r.p][i]; const add=(part[r.p][i]&&d!=null)?`<text x="${(bx+bw-58).toFixed(1)}" y="${ry}" text-anchor="end" class="race-tip-add">+${nf(d)}</text>`:"";
+    out+=`<circle cx="${(bx+15).toFixed(1)}" cy="${(ry-3.5).toFixed(1)}" r="4" fill="${kitColor(r.p)}"/><text x="${(bx+27).toFixed(1)}" y="${ry}" class="race-tip-r">${r.p}</text>${add}<text x="${(bx+bw-12).toFixed(1)}" y="${ry}" text-anchor="end" class="race-tip-v">${nf(r.v)}</text>`; });
   g.innerHTML=out;
 }
 function raceTipOut(){ const g=document.getElementById("race-tip"); if(g) g.innerHTML=""; }
