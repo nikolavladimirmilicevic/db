@@ -986,12 +986,18 @@ function renderRace(){
   const totals={}, series={}; players.forEach(p=>{ totals[p]=0; series[p]=[0]; });
   tourns.forEach(t=>{ players.forEach(p=>{ const tm=t.teams.find(x=>inTeam(x.by,p)); if(tm) totals[p]+=(tm.points||0); series[p].push(totals[p]); }); });
   const N=tourns.length;
-  const W=860,H=360,L=52,R=84,T=18,Bt=30;
-  const maxY=Math.max(1, ...players.flatMap(p=>series[p]));
+  const W=860,H=376,L=56,R=84,T=18,Bt=42;
+  const rawMax=Math.max(1, ...players.flatMap(p=>series[p]));
+  const niceStep=(max,lines)=>{ const raw=max/lines, mag=Math.pow(10,Math.floor(Math.log10(raw))), n=raw/mag; const st=n<=1?1:n<=2?2:n<=2.5?2.5:n<=5?5:10; return st*mag; };
+  const step=niceStep(rawMax,5);
+  const maxY=Math.max(step, Math.ceil(rawMax/step)*step);
   const X=i=> L + (N<=0?0:(i/N)*(W-L-R));
   const Y=v=> (H-Bt) - (v/maxY)*(H-T-Bt);
-  const grid=[0,.25,.5,.75,1].map(fr=>{ const v=Math.round(maxY*fr), yy=Y(v);
-    return `<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--line)" stroke-width="1"/><text x="${L-8}" y="${yy+4}" text-anchor="end" class="race-ax">${nf(v)}</text>`; }).join("");
+  let grid=""; for(let v=0; v<=maxY+0.5; v+=step){ const yy=Y(v); grid+=`<line x1="${L}" y1="${yy}" x2="${W-R}" y2="${yy}" stroke="var(--line)" stroke-width="1"/><text x="${L-9}" y="${yy+4}" text-anchor="end" class="race-ax">${nf(v)}</text>`; }
+  const MON=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  let prevM=null, xlab="";
+  tourns.forEach((t,i)=>{ const m=parseInt((t.date||"").split(".")[1],10); if(m===prevM) return; prevM=m; const xx=X(i+1);
+    xlab+=`<line x1="${xx.toFixed(1)}" y1="${T}" x2="${xx.toFixed(1)}" y2="${H-Bt}" stroke="var(--line)" stroke-width="1" opacity=".3"/><text x="${xx.toFixed(1)}" y="${H-16}" text-anchor="middle" class="race-ax">${MON[m]||""}</text>`; });
   // rank end labels to reduce overlap
   const ends=players.map(p=>({p, v:series[p][series[p].length-1]})).sort((a,b)=>b.v-a.v);
   let lastY=-99; const endLbl=ends.map(e=>{ let yy=Y(e.v); if(yy-lastY<14) yy=lastY+14; lastY=yy;
@@ -1001,7 +1007,7 @@ function renderRace(){
     const lastV=series[p][series[p].length-1];
     return `<polyline points="${pts}" fill="none" stroke="${kitColor(p)}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(N).toFixed(1)}" cy="${Y(lastV).toFixed(1)}" r="3.6" fill="${kitColor(p)}"/>`;
   }).join("");
-  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="race-svg" preserveAspectRatio="xMidYMid meet">${grid}${lines}${endLbl}</svg>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="race-svg" preserveAspectRatio="xMidYMid meet">${grid}${xlab}${lines}${endLbl}</svg>`;
 }
 function renderH2H(){
   const el=document.getElementById("h2h-result"); if(!el) return;
