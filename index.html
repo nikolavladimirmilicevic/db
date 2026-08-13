@@ -395,7 +395,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .xi-row{display:flex;justify-content:space-around;align-items:center;gap:8px;position:relative;z-index:1}
 .xi-player{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;flex:0 1 auto;cursor:default}
 .xi-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:11px;box-shadow:0 3px 12px rgba(6,4,20,.45)}
-.xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--white)}
+.xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;max-width:92px;white-space:normal;line-height:1.2;color:var(--white)}
 .xi-GK .xi-dot{background:var(--silver);color:var(--ink)}
 .xi-DF .xi-dot{background:#2f66d6;color:#fff}
 .xi-MF .xi-dot{background:var(--cyan);color:var(--ink)}
@@ -1839,15 +1839,18 @@ function renderPlayer(nick){
   const inTeam=(by,n)=>(by||"").split(" + ").map(x=>x.trim()).includes(n);
   const myT=(CUR_TOURNAMENTS||[]).filter(t=>t.teams.some(tm=>inTeam(tm.by,nick)));
   const clubs={}, fbStats={};
-  myT.forEach(t=>{ const tm=t.teams.find(x=>inTeam(x.by,nick)); if(!tm) return; const pl=tm.place;
+  myT.forEach(t=>{ const tm=t.teams.find(x=>inTeam(x.by,nick)); if(!tm) return; const pl=tm.place, pts=tm.points||0;
     const c=tm.club||"?"; (clubs[c]=clubs[c]||{n:0,best:99}); clubs[c].n++; if(pl!=null&&pl<clubs[c].best) clubs[c].best=pl;
     (tm.best||[]).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=b.name+"|"+b.pos;
-      const st=fbStats[k]=fbStats[k]||{name:b.name, pos:b.pos, g:[0,0,0,0,0,0,0], apps:0, rSum:0, rN:0};
-      st.apps++; if(pl>=1&&pl<=7) st.g[pl-1]++; const rr=parseFloat(b.rating); if(!isNaN(rr)){ st.rSum+=rr; st.rN++; } }); });
+      const st=fbStats[k]=fbStats[k]||{name:b.name, pos:b.pos, pts:0, best:99, apps:0, rSum:0, rN:0};
+      st.apps++; st.pts+=pts; if(pl!=null&&pl<st.best) st.best=pl; const rr=parseFloat(b.rating); if(!isNaN(rr)){ st.rSum+=rr; st.rN++; } }); });
   const clubArr=Object.entries(clubs).map(([c,v])=>({c,...v})).sort((a,b)=>b.n-a.n||a.best-b.best);
-  // Winning Eleven: rank footballers by golds, silvers, ... 7th, then avg rating, then apps
-  const fbList=Object.values(fbStats).map(x=>({...x, avg:x.rN?x.rSum/x.rN:0}));
-  const cmp=(a,b)=>{ for(let i=0;i<7;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; } if(b.avg!==a.avg) return b.avg-a.avg; return b.apps-a.apps; };
+  // Top Performances ranks for this competitor's footballers (26i is footballer performances)
+  const tpSorted=[...(SCORERS_LIST||[])].sort((a,b)=>b.tot-a.tot), tpRank={};
+  tpSorted.forEach((e,i)=>{ if(!inTeam(e.by,nick)) return; const rk=i+1; if(tpRank[e.player]==null||rk<tpRank[e.player]) tpRank[e.player]=rk; });
+  // Winning Eleven: points won, then best finish, then Top Performances rank, then rating
+  const fbList=Object.values(fbStats).map(x=>({...x, avg:x.rN?x.rSum/x.rN:0, tp:(tpRank[x.name]!=null?tpRank[x.name]:Infinity)}));
+  const cmp=(a,b)=> (b.pts-a.pts) || (a.best-b.best) || (a.tp-b.tp) || (b.avg-a.avg);
   const byPos={GK:[],DF:[],MF:[],FW:[]};
   fbList.forEach(x=>{ if(byPos[x.pos]) byPos[x.pos].push(x); });
   Object.values(byPos).forEach(l=>l.sort(cmp));
@@ -1858,11 +1861,12 @@ function renderPlayer(nick){
     let cands=[]; ["DF","MF","FW"].forEach(pos=>{ if(byPos[pos].length && c[pos]<maxP[pos]) cands.push(byPos[pos][0]); });
     if(!cands.length) break; cands.sort(cmp); const pick=cands[0];
     xi.push({...byPos[pick.pos].shift(), slot:pick.pos}); }
-  const rowFW=xi.filter(p=>p.slot==="FW"), rowMF=xi.filter(p=>p.slot==="MF"), rowDF=xi.filter(p=>p.slot==="DF"), rowGK=xi.filter(p=>p.slot==="GK");
-  const formation=`${rowDF.length}-${rowMF.length}-${rowFW.length}`;
-  const ord=["1st","2nd","3rd","4th","5th","6th","7th"];
-  const dot=(p)=>{ const parts=[]; p.g.forEach((n,i)=>{ if(n) parts.push(n+"\u00d7 "+ord[i]); });
-    const tip=`${p.apps} app${p.apps===1?'':'s'}${parts.length?" \u00b7 "+parts.join(", "):""}${p.avg?" \u00b7 avg "+p.avg.toFixed(1):""}`;
+  // arrange each row so better-ranked players sit in the middle
+  const centerOut=arr=>{ const r=[]; arr.forEach((x,i)=>{ if(i%2===0) r.push(x); else r.unshift(x); }); return r; };
+  const arrange=list=>centerOut([...list].sort(cmp));
+  const rowGK=xi.filter(p=>p.slot==="GK"), rowFW=arrange(xi.filter(p=>p.slot==="FW")), rowMF=arrange(xi.filter(p=>p.slot==="MF")), rowDF=arrange(xi.filter(p=>p.slot==="DF"));
+  const formation=`${xi.filter(p=>p.slot==="DF").length}-${xi.filter(p=>p.slot==="MF").length}-${xi.filter(p=>p.slot==="FW").length}`;
+  const dot=(p)=>{ const tip=`${p.apps} app${p.apps===1?'':'s'} \u00b7 ${nf(p.pts)} pts \u00b7 best ${p.best<99?ordinal(p.best):'-'}${p.tp<Infinity?' \u00b7 TP #'+p.tp:''}${p.avg?' \u00b7 '+p.avg.toFixed(1):''}`;
     return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}</div><div class="xi-nm">${p.name}</div></div>`; };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI of footballers fielded this season \u00b7 ${formation}</span></div>`
