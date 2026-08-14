@@ -397,7 +397,8 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .xi-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;width:100%;max-width:600px;margin:0 auto;box-sizing:border-box;position:relative;z-index:1}
 .xi-row-solo{justify-content:center}
 .xi-player{display:flex;flex-direction:column;align-items:center;gap:6px;flex:0 0 auto;width:92px;cursor:default;text-align:center}
-.xi-dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:11px;box-shadow:0 3px 12px rgba(6,4,20,.45)}
+.xi-dot{position:relative;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fredoka',sans-serif;font-weight:600;font-size:11px;box-shadow:0 3px 12px rgba(6,4,20,.45)}
+.xi-cap{position:absolute;top:-4px;right:-4px;width:17px;height:17px;border-radius:50%;background:#f5c518;color:#1a1533;font-family:'Fredoka',sans-serif;font-weight:600;font-size:9px;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;width:100%;white-space:normal;line-height:1.2;color:var(--white)}
 .xi-GK .xi-dot{background:var(--silver);color:var(--ink)}
 .xi-DF .xi-dot{background:#2f66d6;color:#fff}
@@ -1883,9 +1884,11 @@ function renderPlayer(nick){
   const rowGK=xi.filter(p=>p.slot==="GK"), rowFW=arrange(xi.filter(p=>p.slot==="FW")), rowMF=arrange(xi.filter(p=>p.slot==="MF")), rowDF=arrange(xi.filter(p=>p.slot==="DF"));
   const formation=`${xi.filter(p=>p.slot==="DF").length}-${xi.filter(p=>p.slot==="MF").length}-${xi.filter(p=>p.slot==="FW").length}`;
   const ordArr=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
+  const capKey = xi.length ? nn([...xi].sort(cmp)[0].name) : "";
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", ");
-    const tip=`${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}${p.rating?" \u00b7 "+p.rating:""}`;
-    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}</div><div class="xi-nm">${p.name}</div></div>`; };
+    const isCap = nn(p.name)===capKey;
+    const tip=`${isCap?"(C) ":""}${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}${p.rating?" \u00b7 "+p.rating:""}`;
+    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`; };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI by points won, finishes and performances \u00b7 ${formation}</span></div>`
     + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`;
