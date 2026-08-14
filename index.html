@@ -1560,13 +1560,15 @@ function parse26tu(csvText){
                  fw:tc("Najbolji FW"), mf:tc("Najbolji MF"), df:tc("Najbolji DF"), gk:tc("Najbolji GK"),
                  t1:tc("Takmičar 1","Takmicar 1","Takmičar"), t2:tc("Takmičar 2","Takmicar 2"),
                  place:tc("Mesto"), pts:tc("Bodovi") };
-    const teams = []; let j = h+1;
+    const teams = [], allBest = []; let j = h+1;
     for(; j<rows.length; j++){
       const tr = rows[j] || [];
       if(isLabel(tr)) break;
+      const bp = (k,pos)=>{ if(k<0) return null; const nm=clean(tr[k]); if(!nm) return null; return {pos, name:nm, rating:clean(tr[k+1])}; };
+      const best4 = [bp(ci.fw,"FW"), bp(ci.mf,"MF"), bp(ci.df,"DF"), bp(ci.gk,"GK")].filter(Boolean);
+      best4.forEach(b=>allBest.push(b));
       const t1 = ci.t1>=0?clean(tr[ci.t1]):"", t2 = ci.t2>=0?clean(tr[ci.t2]):"";
       if(!t1 && !t2) continue;
-      const bp = (k,pos)=>{ if(k<0) return null; const nm=clean(tr[k]); if(!nm) return null; return {pos, name:nm, rating:clean(tr[k+1])}; };
       teams.push({
         club: ci.tim>=0?clean(tr[ci.tim]):"",
         stars: ci.stars>=0?clean(tr[ci.stars]):"",
@@ -1574,11 +1576,11 @@ function parse26tu(csvText){
         by: [t1,t2].filter(Boolean).join(" + "),
         place: ci.place>=0?parseInt(clean(tr[ci.place]),10)||null:null,
         points: ci.pts>=0?parseInt(clean(tr[ci.pts]),10)||0:0,
-        best: [bp(ci.fw,"FW"), bp(ci.mf,"MF"), bp(ci.df,"DF"), bp(ci.gk,"GK")].filter(Boolean)
+        best: best4
       });
     }
     teams.sort((a,b)=>(a.place||99)-(b.place||99));
-    if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams, idx: out.length });
+    if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams, allBest, idx: out.length });
     i = j-1;
   }
   return out.sort((a,b)=> tournKey(b.date)-tournKey(a.date) || b.idx-a.idx);
@@ -1848,7 +1850,7 @@ function renderPlayer(nick){
   // ===== Winning Eleven =====
   const nn = str => (str||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
   const POS={}, RAT={};
-  (CUR_TOURNAMENTS||[]).forEach(t=>t.teams.forEach(tm=>(tm.best||[]).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=nn(b.name); if(!POS[k]) POS[k]=b.pos; const rr=parseFloat(b.rating); if(!isNaN(rr)&&(RAT[k]==null||rr>RAT[k])) RAT[k]=rr; })));
+  (CUR_TOURNAMENTS||[]).forEach(t=>(t.allBest||[].concat(...t.teams.map(tm=>tm.best||[]))).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=nn(b.name); if(!POS[k]) POS[k]=b.pos; const rr=parseFloat(b.rating); if(!isNaN(rr)&&(RAT[k]==null||rr>RAT[k])) RAT[k]=rr; }));
   const tpSorted=[...(SCORERS_LIST||[])].sort((a,b)=>b.tot-a.tot), tpRank={};
   tpSorted.forEach((e,i)=>{ if(!inTeam(e.by,nick)) return; const k=nn(e.player); if(tpRank[k]==null) tpRank[k]=i+1; });
   const mine=[];
