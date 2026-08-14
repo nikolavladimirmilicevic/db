@@ -300,6 +300,14 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .rec-lab{font-family:'Nunito',sans-serif;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
 .rec-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;margin-top:8px}
 .rec-val{font-family:'Nunito',sans-serif;font-weight:800;color:var(--cyan-2);font-size:13px;margin-top:3px}
+.rec-card{position:relative}
+.rec-ic{position:absolute;top:16px;right:16px;width:22px;height:22px;color:var(--purple-2);opacity:.55}
+.rec-ic svg{width:100%;height:100%;display:block}
+.cat-M{color:var(--cyan-2);border-color:rgba(0,184,232,.5)}
+.cat-Q{color:var(--purple-2);border-color:rgba(134,134,222,.5)}
+.cat-D{color:var(--steel);border-color:rgba(111,123,196,.5)}
+.cat-Y{color:#f5c518;border-color:rgba(245,197,24,.5)}
+
 .h2h-pick{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:24px}
 .h2h-sel{appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--line);color:var(--white);font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;padding:12px 18px;border-radius:12px;cursor:pointer;min-width:170px}
 .h2h-sel:hover{border-color:var(--cyan)}
@@ -1076,14 +1084,14 @@ function renderLatest(){
   const el=document.getElementById("latest"); if(!el) return;
   const list=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(b.date)-tournKey(a.date) || (b.idx||0)-(a.idx||0));
   const t=list[0]; if(!t){ el.innerHTML=""; return; }
-  const catName={M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[t.catCode]||t.cat||"";
+  const catName={M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[t.catCode]||t.cat||""; const catCls="cat-"+(t.catCode||"x");
   const podium=[...t.teams].filter(x=>x.place!=null).sort((a,b)=>a.place-b.place).slice(0,3);
   const medal=p=>p===1?"lp-1":p===2?"lp-2":"lp-3";
   const rows=podium.map(x=>`<div class="lp ${medal(x.place)}"><span class="lp-pos">${x.place}</span><span class="lp-club">${x.club||""}</span><span class="lp-by">${x.by||""}</span></div>`).join("");
   el.innerHTML=`<div class="latest-card">
     <div class="latest-head">
       <span class="latest-lab">Latest result</span>
-      <span class="latest-cat">${catName}</span>
+      <span class="latest-cat ${catCls}">${catName}</span>
       <span class="latest-name">${tr(t.name)}</span>
       <span class="latest-date">${t.date}</span>
     </div>
@@ -1250,12 +1258,18 @@ function renderRecords(){
   const podiums = top(r=>r.places.filter(p=>p!=null&&p<=3).length);
   const seasons = top(r=>r.places.filter(p=>p!=null).length);
   const leader  = (LAST_STANDINGS&&LAST_STANDINGS[0]) ? {nick:LAST_STANDINGS[0].nick, v:LAST_STANDINGS[0].pts} : null;
-  const card=(lab,rec,unit)=> rec ? `<a class="rec-card" href="#player-${encodeURIComponent(rec.nick)}"><div class="rec-lab">${lab}</div><div class="rec-name">${rec.nick}</div><div class="rec-val">${unit(rec.v)}</div></a>` : "";
+  const IC={
+    titles:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>',
+    podiums:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 14h4v6H4v-6Zm6-5h4v11h-4V9Zm6 3h4v8h-4v-8Z"/></svg>',
+    seasons:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    leader:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 20h14v-2H5v2Zm7-16-2.5 5L4 9l4 3.5L6.5 18 12 15l5.5 3L16 12.5 20 9l-5.5-.9L12 4Z"/></svg>'
+  };
+  const card=(lab,rec,unit,ic)=> rec ? `<a class="rec-card" href="#player-${encodeURIComponent(rec.nick)}"><span class="rec-ic">${ic}</span><div class="rec-lab">${lab}</div><div class="rec-name">${rec.nick}</div><div class="rec-val">${unit(rec.v)}</div></a>` : "";
   el.innerHTML = [
-    card("Most Titles", titles, v=>v+(v===1?" title":" titles")),
-    card("Most Podiums", podiums, v=>v+" podiums"),
-    card("Most Seasons", seasons, v=>v+" seasons"),
-    card("Current Leader", leader, v=>(v!=null?nf(v):"-")+" pts")
+    card("Most Titles", titles, v=>v+(v===1?" title":" titles"), IC.titles),
+    card("Most Podiums", podiums, v=>v+" podiums", IC.podiums),
+    card("Most Seasons", seasons, v=>v+" seasons", IC.seasons),
+    card("Current Leader", leader, v=>(v!=null?nf(v):"-")+" pts", IC.leader)
   ].join("");
 }
 function renderHonours(){
