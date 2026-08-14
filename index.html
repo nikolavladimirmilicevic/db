@@ -1888,7 +1888,7 @@ function renderPlayer(nick){
     return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}</div><div class="xi-nm">${p.name}</div></div>`; };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI by points won, finishes and performances \u00b7 ${formation}</span></div>`
-    + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}">${r.map(dot).join("")}</div>`).join("") + `</div>`;
+    + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`;
   const clubOrd=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
   if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>points won, finishes and appearances</span></div>`
     + `<div class="table-card"><table><thead><tr><th class="name">Club</th><th>Pts</th><th>Used</th><th class="club-fins-h">Finishes</th></tr></thead><tbody>`
