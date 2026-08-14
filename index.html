@@ -382,6 +382,8 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .lp-by{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
 .club-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
 .club-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(170,160,220,.08)}
+.club-fins,.club-fins-h{text-align:left!important}
+.club-fins{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted);white-space:normal;line-height:1.4}
 .club-row:last-child{border-bottom:none}
 .club-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px}
 .club-meta{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted)}
@@ -1841,11 +1843,11 @@ function renderPlayer(nick){
   const myT=(CUR_TOURNAMENTS||[]).filter(t=>t.teams.some(tm=>inTeam(tm.by,nick)));
   const clubs={}, fbStats={};
   myT.forEach(t=>{ const tm=t.teams.find(x=>inTeam(x.by,nick)); if(!tm) return; const pl=tm.place, pts=tm.points||0;
-    const c=tm.club||"?"; (clubs[c]=clubs[c]||{n:0,best:99}); clubs[c].n++; if(pl!=null&&pl<clubs[c].best) clubs[c].best=pl;
+    const c=tm.club||"?"; (clubs[c]=clubs[c]||{n:0,pts:0,g:[0,0,0,0,0,0,0,0]}); clubs[c].n++; clubs[c].pts+=pts; if(pl>=1&&pl<=8) clubs[c].g[pl-1]++;
     (tm.best||[]).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=b.name+"|"+b.pos;
       const st=fbStats[k]=fbStats[k]||{name:b.name, pos:b.pos, pts:0, best:99, apps:0, rSum:0, rN:0};
       st.apps++; st.pts+=pts; if(pl!=null&&pl<st.best) st.best=pl; const rr=parseFloat(b.rating); if(!isNaN(rr)){ st.rSum+=rr; st.rN++; } }); });
-  const clubArr=Object.entries(clubs).map(([c,v])=>({c,...v})).sort((a,b)=>b.n-a.n||a.best-b.best);
+  const clubArr=Object.entries(clubs).map(([c,v])=>({c,...v})).sort((a,b)=>{ if(b.pts!==a.pts) return b.pts-a.pts; for(let i=0;i<8;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; } return b.n-a.n; });
   // Top Performances ranks for this competitor's footballers (26i is footballer performances)
   const nn = str => (str||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
   const tpSorted=[...(SCORERS_LIST||[])].sort((a,b)=>b.tot-a.tot), tpRank={};
@@ -1873,8 +1875,12 @@ function renderPlayer(nick){
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI of footballers fielded this season \u00b7 ${formation}</span></div>`
     + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}">${r.map(dot).join("")}</div>`).join("") + `</div>`;
-  if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>sides picked and best finish</span></div><div class="club-list">`
-    + clubArr.map(c=>`<div class="club-row"><span class="club-name">${c.c}</span><span class="club-meta">${c.n}\u00d7 \u00b7 best ${c.best<99?ordinal(c.best):"-"}</span></div>`).join("") + `</div>`;
+  const clubOrd=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
+  if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>points won, finishes and appearances</span></div>`
+    + `<div class="table-card"><table><thead><tr><th class="name">Club</th><th>Pts</th><th>Used</th><th class="club-fins-h">Finishes</th></tr></thead><tbody>`
+    + clubArr.map(c=>{ const fins=c.g.map((n,i)=> n?`${n}\u00d7${clubOrd[i]}`:"").filter(Boolean).join(" \u00b7 ")||"\u2014";
+        return `<tr><td class="name-cell"><span class="nm">${c.c}</span></td><td class="pts">${nf(c.pts)}</td><td>${c.n}</td><td class="club-fins">${fins}</td></tr>`; }).join("")
+    + `</tbody></table></div>`;
   document.getElementById("pp-season").innerHTML = seasonHtml;
 }
 function sharePlayer(btn){
