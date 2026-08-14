@@ -1855,7 +1855,8 @@ function renderPlayer(nick){
   (CUR_TOURNAMENTS||[]).forEach(t=>{ const tm=t.teams.find(x=>inTeam(x.by,nick)); if(!tm) return; mine.push({date:t.date, club:tm.club, place:tm.place, points:tm.points||0, best:tm.best||[], tp:[]}); });
   // attach each Top Performer to this competitor's tournament with the same club and closest date
   tpSorted.forEach(e=>{ if(!inTeam(e.by,nick)) return; const club=nn(e.club), ed=tournKey(e.date);
-    const t=mine.find(t=> nn(t.club)===club && tournKey(t.date)===ed); if(t) t.tp.push({name:e.player, tot:e.tot}); });
+    let bt=null, bd=Infinity; mine.forEach(t=>{ if(nn(t.club)!==club) return; const d=Math.abs(tournKey(t.date)-ed); if(d<bd){ bd=d; bt=t; } });
+    if(bt) bt.tp.push({name:e.player, tot:e.tot}); });
   mine.sort((a,b)=> (b.points-a.points) || ((a.place||99)-(b.place||99)) || (tournKey(b.date)-tournKey(a.date)));
   const ordered=[], seen=new Set();
   mine.forEach(t=>{
