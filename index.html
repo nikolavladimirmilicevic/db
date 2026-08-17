@@ -1978,7 +1978,14 @@ function routeSeason(){
   const sm = hash.match(/season-(\d{4})/);
   if(pm){ showPlayer(decodeURIComponent(pm[1])); }
   else if(sm && (SEASON_GIDS[sm[1]] || LEGACY_GID[sm[1]])){ showSeason(parseInt(sm[1],10)); }
-  else { document.getElementById("home").hidden=false; document.getElementById("season-page").hidden=true; document.getElementById("player-page").hidden=true; }
+  else {
+    const home=document.getElementById("home"); const wasHidden=home.hidden;
+    home.hidden=false; document.getElementById("season-page").hidden=true; document.getElementById("player-page").hidden=true;
+    if(wasHidden){
+      const id=hash.replace(/^#/,""); const el=(id && id!=="top") ? document.getElementById(id) : null;
+      requestAnimationFrame(()=>{ if(el) el.scrollIntoView({block:"start"}); else window.scrollTo(0,0); });
+    }
+  }
 }
 window.addEventListener("hashchange", routeSeason);
 routeSeason();
