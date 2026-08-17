@@ -650,16 +650,23 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
   </div>
     <div class="table-card" id="sp-scorers"></div>
   </section>
+  <section class="wrap" id="sec-tots">
+    <div class="sec-head">
+    <div class="idx">03 / BEST XI</div>
+    <div class="sec-title"><h2>Team of the Season</h2><p>The strongest eleven of the season, across every competitor.</p></div>
+  </div>
+    <div id="sp-tots"></div>
+  </section>
   <section class="wrap" id="sec-tourns">
     <div class="sec-head">
-    <div class="idx">03 / RESULTS</div>
+    <div class="idx">04 / RESULTS</div>
     <div class="sec-title"><h2>Tournaments</h2></div>
   </div>
     <div class="tourns" id="sp-tourns"></div>
   </section>
   <section class="wrap" id="sec-scoring">
     <div class="sec-head">
-    <div class="idx">04 / SCORING</div>
+    <div class="idx">05 / SCORING</div>
     <div class="sec-title"><h2>Scoring &amp; Calendar</h2></div>
   </div>
     <div class="raw-wrap" id="sp-scoring"></div>
@@ -1115,29 +1122,27 @@ function renderSquad(){
   }).join("");
 }
 let TOURN_FILTER = {cat:"all", player:"all"};
-function computeTOTS(){
-  const el=document.getElementById("tots-pitch"); if(!el) return;
-  if(!(typeof CUR_TOURNAMENTS!=="undefined") || !CUR_TOURNAMENTS || !CUR_TOURNAMENTS.length){ el.innerHTML=""; return; }
+function buildTOTS(TOURS, SCORERS, elId){
+  const el=document.getElementById(elId); if(!el) return;
+  if(!TOURS || !TOURS.length){ el.innerHTML=""; return; }
   const nn=str=>(str||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
   const POS={}, RAT={};
-  CUR_TOURNAMENTS.forEach(t=>(t.allBest||[].concat(...t.teams.map(tm=>tm.best||[]))).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=nn(b.name); if(!POS[k]) POS[k]=b.pos; const rr=parseFloat(b.rating); if(!isNaN(rr)&&(RAT[k]==null||rr>RAT[k])) RAT[k]=rr; }));
-  const tpSorted=[...(typeof SCORERS_LIST!=="undefined"&&SCORERS_LIST?SCORERS_LIST:[])].sort((a,b)=>b.tot-a.tot), tpRank={};
+  TOURS.forEach(t=>(t.allBest||[].concat(...t.teams.map(tm=>tm.best||[]))).forEach(b=>{ if(!b||!b.name||!b.pos) return; const k=nn(b.name); if(!POS[k]) POS[k]=b.pos; const rr=parseFloat(b.rating); if(!isNaN(rr)&&(RAT[k]==null||rr>RAT[k])) RAT[k]=rr; }));
+  const tpSorted=[...(SCORERS||[])].sort((a,b)=>b.tot-a.tot), tpRank={};
   tpSorted.forEach((e,i)=>{ const k=nn(e.player); if(tpRank[k]==null) tpRank[k]=i+1; });
-  CUR_TOURNAMENTS.forEach(t=>t.teams.forEach(tm=>tm._perf=[]));
+  TOURS.forEach(t=>t.teams.forEach(tm=>tm._perf=[]));
   tpSorted.forEach(e=>{ const club=nn(e.club), ed=tournKey(e.date); let best=null,bd=Infinity;
-    CUR_TOURNAMENTS.forEach(t=>t.teams.forEach(tm=>{ if(nn(tm.club)!==club) return; const d=Math.abs(tournKey(t.date)-ed); if(d<bd){bd=d;best=tm;} }));
+    TOURS.forEach(t=>t.teams.forEach(tm=>{ if(nn(tm.club)!==club) return; const d=Math.abs(tournKey(t.date)-ed); if(d<bd){bd=d;best=tm;} }));
     if(best) best._perf.push(e.player); });
   const agg={};
-  CUR_TOURNAMENTS.forEach(t=>t.teams.forEach(tm=>{
+  TOURS.forEach(t=>t.teams.forEach(tm=>{
     const names=new Set();
     (tm.best||[]).forEach(b=>{ if(b&&b.name&&b.pos) names.add(b.name); });
     (tm._perf||[]).forEach(n=>names.add(n));
     names.forEach(name=>{ const k=nn(name); const pos=POS[k]; if(!pos) return;
-      const a=agg[k]=agg[k]||{name, pos, points:0, g:[0,0,0,0,0,0,0,0], apps:0, rating:RAT[k]||0, tp:(tpRank[k]!=null?tpRank[k]:Infinity), byCount:{}};
-      a.points+=(tm.points||0); a.apps++; if(tm.place>=1&&tm.place<=8) a.g[tm.place-1]++;
-      (tm.by||"").split(" + ").map(x=>x.trim()).filter(Boolean).forEach(m=>{ a.byCount[m]=(a.byCount[m]||0)+1; }); });
+      const a=agg[k]=agg[k]||{name, pos, points:0, g:[0,0,0,0,0,0,0,0], apps:0, rating:RAT[k]||0, tp:(tpRank[k]!=null?tpRank[k]:Infinity)};
+      a.points+=(tm.points||0); a.apps++; if(tm.place>=1&&tm.place<=8) a.g[tm.place-1]++; });
   }));
-  Object.values(agg).forEach(a=>{ const e=Object.entries(a.byCount||{}).sort((x,y)=>y[1]-x[1])[0]; a.topBy=e?e[0]:""; });
   const cmp=(a,b)=>{ if(b.points!==a.points) return b.points-a.points; for(let i=0;i<8;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; } if(b.apps!==a.apps) return b.apps-a.apps; if(a.tp!==b.tp) return a.tp-b.tp; return b.rating-a.rating; };
   const byPos={GK:[],DF:[],MF:[],FW:[]};
   Object.values(agg).forEach(p=>{ if(byPos[p.pos]) byPos[p.pos].push(p); });
@@ -1155,9 +1160,10 @@ function computeTOTS(){
   const capKey=xi.length?nn([...xi].sort(cmp)[0].name):"";
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", "); const isCap=nn(p.name)===capKey;
     const tip=`${isCap?"(C) ":""}${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}${p.rating?" \u00b7 "+p.rating:""}`;
-    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div>${p.topBy?`<div class="xi-by"><span class="xi-by-kit" style="background:${kitColor(p.topBy)}"></span>${p.topBy}</div>`:""}</div>`; };
+    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`; };
   el.innerHTML = xi.length ? (`<div class="tots-form">Formation ${formation}</div><div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`) : "";
 }
+function computeTOTS(){ buildTOTS(typeof CUR_TOURNAMENTS!=="undefined"?CUR_TOURNAMENTS:[], typeof SCORERS_LIST!=="undefined"?SCORERS_LIST:[], "tots-pitch"); }
 function renderLatest(){
   const el=document.getElementById("latest"); if(!el) return;
   const list=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(b.date)-tournKey(a.date) || (b.idx||0)-(a.idx||0));
@@ -1893,6 +1899,7 @@ async function loadSeason(year){
   renderBreakdown(data.rawStandings, "sp-breakdown", {year, tournaments:data.tournaments||[]});
   renderScorers(data.scorers||[], "sp-scorers", {date:true});
   renderTournaments(data.tournaments||[], "sp-tourns", {detailed:true});
+  buildTOTS(data.tournaments||[], data.scorers||[], "sp-tots");
   renderSheetTable(data.rawScoring, "sp-scoring");
   document.getElementById("sp-champ").textContent = rows[0] ? rows[0].nick : "-";
   const top = (data.scorers||[])[0];
@@ -1981,7 +1988,7 @@ function renderPlayer(nick){
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", ");
     const isCap = nn(p.name)===capKey;
     const tip=`${isCap?"(C) ":""}${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}${p.rating?" \u00b7 "+p.rating:""}`;
-    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div>${p.topBy?`<div class="xi-by"><span class="xi-by-kit" style="background:${kitColor(p.topBy)}"></span>${p.topBy}</div>`:""}</div>`; };
+    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`; };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI by points won, finishes and performances \u00b7 ${formation}</span></div>`
     + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`;
@@ -2019,9 +2026,9 @@ function showSeason(year){
   document.getElementById("sp-year").textContent = "Season " + year;
   document.getElementById("sp-title").textContent = year;
   window.scrollTo(0,0);
-  ["sec-standings","sec-scorers","sec-tourns","sec-scoring"].forEach(id=>document.getElementById(id).hidden = legacy);
+  ["sec-standings","sec-scorers","sec-tots","sec-tourns","sec-scoring"].forEach(id=>document.getElementById(id).hidden = legacy);
   document.getElementById("sec-legacy").hidden = !legacy;
-  ["sp-standings","sp-breakdown","sp-scorers","sp-tourns","sp-scoring","sp-legacy"].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=""; });
+  ["sp-standings","sp-breakdown","sp-scorers","sp-tots","sp-tourns","sp-scoring","sp-legacy"].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML=""; });
   const h = HONOURS.find(x=>x.yr == year);
   document.getElementById("sp-champ").textContent = (h && h.champ && h.champ!=="?") ? h.champ : "-";
   setSpPots((h && h.pots && h.pots!=="?") ? h.pots : null);
