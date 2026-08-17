@@ -290,8 +290,11 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .nm-link{color:inherit;text-decoration:none}
 .nm-link:hover .nm{color:var(--cyan-2)}
 .pp-top{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
-.pp-photo{width:118px;height:118px;border-radius:16px;overflow:hidden;border:1px solid var(--line);flex:0 0 auto;background:var(--ink-2)}
-.pp-photo img{width:100%;height:100%;object-fit:cover;display:block}
+.pp-photo{width:150px;height:150px;border-radius:16px;overflow:hidden;border:1px solid var(--line);flex:0 0 auto;background:var(--ink-2);cursor:zoom-in}
+.pp-photo img{width:100%;height:100%;object-fit:contain;display:block}
+.lightbox{position:fixed;inset:0;z-index:1000;background:rgba(6,4,20,.93);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.lightbox[hidden]{display:none}
+.lightbox img{max-width:92vw;max-height:92vh;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
 .pp-role{font-family:'Nunito',sans-serif;color:var(--cyan-2);font-weight:700;margin-top:8px;font-size:15px}
 .pp-trophies{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--cyan-2)}
 .pp-trophies .none{color:var(--muted);font-style:italic;font-size:14px}
@@ -683,6 +686,8 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
     <div id="pp-season"></div>
   </section>
 </div>
+
+<div id="img-lightbox" class="lightbox" hidden onclick="closeLightbox()"><img id="lightbox-img" alt=""></div>
 
 <footer id="site-footer">
   <div class="wrap">
@@ -1846,6 +1851,7 @@ function renderPlayer(nick){
   const photo = document.getElementById("pp-photo");
   photo.style.display = IMG[nick] ? "" : "none";
   photo.innerHTML = IMG[nick] ? `<img src="${IMG[nick]}" alt="${nick}">` : "";
+  photo.onclick = IMG[nick] ? ()=>openLightbox(IMG[nick]) : null;
   const sq = (typeof SQUAD!=="undefined") ? SQUAD.find(p=>p.nick===nick) : null;
   document.getElementById("pp-role").textContent = sq ? sq.title : "";
   const fin = p => p===1?"fin-1":p===2?"fin-2":p===3?"fin-3":(p<=6?"fin-m":"fin-l");
@@ -1935,6 +1941,9 @@ function sharePlayer(btn){
   const fb=()=>{ const ta=document.createElement("textarea"); ta.value=url; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy"); done();}catch(e){} document.body.removeChild(ta); };
   if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(fb); } else fb();
 }
+function openLightbox(src){ const lb=document.getElementById("img-lightbox"), im=document.getElementById("lightbox-img"); if(!lb||!im||!src) return; im.src=src; lb.hidden=false; document.body.style.overflow="hidden"; }
+function closeLightbox(){ const lb=document.getElementById("img-lightbox"); if(!lb) return; lb.hidden=true; const im=document.getElementById("lightbox-img"); if(im) im.src=""; document.body.style.overflow=""; }
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeLightbox(); });
 function showPlayer(nick){
   document.getElementById("home").hidden = true;
   document.getElementById("season-page").hidden = true;
