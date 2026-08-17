@@ -289,13 +289,18 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .nm-link{color:inherit;text-decoration:none}
 .nm-link:hover .nm{color:var(--cyan-2)}
-.pp-top{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
-.pp-photo{width:230px;border-radius:16px;overflow:hidden;border:1px solid var(--line);flex:0 0 auto;background:var(--ink-2);cursor:zoom-in}
+.pp-top{display:flex;align-items:stretch;gap:22px;flex-wrap:wrap}
+.pp-photo{align-self:flex-start}
+.pp-id{display:flex;flex-direction:column;justify-content:space-between;gap:8px;flex:1 1 300px;min-width:0}
+.pp-photo{width:280px;border-radius:16px;overflow:hidden;border:1px solid var(--line);flex:0 0 auto;background:var(--ink-2);cursor:zoom-in}
 .pp-photo img{width:100%;height:auto;display:block}
 .lightbox{position:fixed;inset:0;z-index:1000;background:rgba(6,4,20,.93);display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
 .lightbox[hidden]{display:none}
 .lightbox img{max-width:92vw;max-height:92vh;border-radius:14px;box-shadow:0 24px 70px rgba(0,0,0,.6)}
 .pp-role{font-family:'Nunito',sans-serif;color:var(--cyan-2);font-weight:700;margin-top:8px;font-size:15px}
+.pp-id .eyebrow{margin-bottom:0}
+.pp-id .sp-title{margin-top:0}
+.pp-id .pp-role{margin-top:0}
 .pp-trophies{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--cyan-2)}
 .pp-trophies .none{color:var(--muted);font-style:italic;font-size:14px}
 .share-btn{background:transparent;border:1px solid var(--line);color:var(--silver);font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:border-color .2s,color .2s;margin-top:16px}
