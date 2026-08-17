@@ -372,6 +372,14 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .tf-chip{background:transparent;border:1px solid var(--line);color:var(--muted);font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;padding:8px 16px;border-radius:999px;cursor:pointer;transition:border-color .2s,background .2s,color .2s}
 .tf-chip:hover{border-color:var(--cyan)}
 .tf-chip.active{background:var(--cyan);border-color:var(--cyan);color:var(--ink)}
+.tf-chip[data-cat="M"]:hover{border-color:var(--cyan-2)}
+.tf-chip[data-cat="Q"]:hover{border-color:var(--purple-2)}
+.tf-chip[data-cat="D"]:hover{border-color:var(--steel)}
+.tf-chip[data-cat="Y"]:hover{border-color:#f5c518}
+.tf-chip[data-cat="M"].active{background:var(--cyan-2);border-color:var(--cyan-2);color:var(--ink)}
+.tf-chip[data-cat="Q"].active{background:var(--purple-2);border-color:var(--purple-2);color:var(--ink)}
+.tf-chip[data-cat="D"].active{background:var(--steel);border-color:var(--steel);color:#fff}
+.tf-chip[data-cat="Y"].active{background:#f5c518;border-color:#f5c518;color:#1a1533}
 .tf-player{appearance:none;-webkit-appearance:none;background:var(--surface);border:1px solid var(--line);color:var(--white);font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;padding:9px 18px;border-radius:999px;cursor:pointer}
 .tf-player:hover{border-color:var(--cyan)}
 .latest-card{border:1px solid var(--line);border-radius:16px;background:linear-gradient(135deg,var(--surface),var(--ink-2));padding:18px 22px;margin-bottom:20px;box-shadow:var(--shadow)}
