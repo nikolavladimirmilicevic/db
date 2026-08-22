@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Group Draw · Deaf Boys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#201b45;--ink-2:#2a2358;--surface:#322a68;--surface-2:#3d3479;--line:rgba(170,160,220,.16);
+  --white:#f4f3fc;--muted:#a49dcf;--silver:#cfcbe9;--cyan:#00b8e8;--cyan-2:#43cdf3;--purple-2:#8686de;--steel:#6f7bc4;
+  --shadow:0 24px 60px -30px rgba(0,0,0,.6);--gold:#f5c518;--gold-2:#e0a80a;--esp:#e11d48;--eng:#2f66d6;--ok:#3fbf6a}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:'Nunito',system-ui,sans-serif;color:var(--white);min-height:100vh;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(1100px 560px at 16% -8%,rgba(0,150,220,.16),rgba(0,150,220,0) 60%),radial-gradient(1000px 620px at 92% 2%,rgba(134,134,222,.14),rgba(134,134,222,0) 60%),var(--ink)}
+.top{position:sticky;top:0;z-index:50;backdrop-filter:blur(14px);background:rgba(32,27,69,.78);border-bottom:1px solid var(--line)}
+.top-in{max-width:1120px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-family:'Fredoka',sans-serif;font-weight:700;font-size:21px;color:var(--white);text-decoration:none;letter-spacing:.01em}
+.top nav{display:flex;gap:18px;flex-wrap:wrap}
+.top nav a{font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:var(--muted);text-decoration:none;transition:color .2s}
+.top nav a:hover{color:var(--silver)}
+.top nav a.active{color:var(--cyan-2)}
+@media(max-width:820px){.top nav{display:none}}
+.wrap{max-width:1120px;margin:0 auto;padding:30px 20px 64px}
+.eyebrow{font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--cyan-2);margin:2px 0 10px}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap}
+h1{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(34px,6vw,56px);line-height:1;margin:0;color:var(--white)}
+.sub{margin:10px 0 0;color:var(--muted);max-width:52ch;font-size:15px;line-height:1.5}
+.draw-btn{font-family:'Nunito',sans-serif;font-weight:800;letter-spacing:.05em;text-transform:uppercase;font-size:14px;color:#22160a;cursor:pointer;
+  background:linear-gradient(180deg,var(--gold),var(--gold-2));border:none;border-radius:12px;padding:15px 24px;
+  box-shadow:0 12px 26px -10px rgba(245,197,24,.5);transition:transform .12s,box-shadow .2s;display:inline-flex;align-items:center;gap:10px;white-space:nowrap}
+.draw-btn:hover{transform:translateY(-2px)}.draw-btn:active{transform:translateY(0)}
+.draw-btn[disabled]{filter:saturate(.4) brightness(.85);cursor:progress}
+.draw-btn .ball{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0 30%,#e7e7e7 31% 55%,#2b2b2b 56%);display:inline-block}
+.draw-btn.spinning .ball{animation:spin .5s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.legend{display:flex;gap:8px 16px;flex-wrap:wrap;margin:22px 0 14px}
+.leg{display:inline-flex;align-items:center;gap:7px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;letter-spacing:.03em;color:var(--muted)}
+.leg img{width:18px;height:13px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+.rules{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0}
+.rule{display:inline-flex;align-items:center;gap:8px;font-family:'Nunito',sans-serif;font-size:13.5px;font-weight:600;color:var(--muted);padding:5px 12px 5px 8px;border:1px solid var(--line);border-radius:999px;transition:.25s}
+.rule .mark{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--muted);display:grid;place-items:center;font-size:10px;color:transparent;flex:none}
+.rule.on{color:var(--white);border-color:rgba(63,191,106,.55);background:rgba(63,191,106,.12)}
+.rule.on .mark{background:var(--ok);border-color:var(--ok);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.empty{grid-column:1 / -1;display:grid;place-items:center;text-align:center;border:1px dashed var(--line);border-radius:16px;padding:56px 24px;background:rgba(255,255,255,.02)}
+.empty-ball{width:44px;height:44px;border-radius:50%;margin:0 auto 16px;background:radial-gradient(circle at 35% 30%,#fff 0 26%,#e7e7e7 27% 52%,#22303c 53%);box-shadow:0 8px 22px -8px rgba(0,0,0,.6)}
+.empty-t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;color:var(--white);margin:0}
+.empty-s{margin:7px 0 0;color:var(--muted);font-size:15px}.empty-s b{color:var(--gold);font-weight:700}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.group{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);animation:rise .45s cubic-bezier(.2,.7,.25,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.g-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 9px;border-bottom:1px solid var(--line)}
+.g-letter{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--white);font-size:28px;line-height:1}
+.g-letter small{font-family:'Nunito',sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;color:var(--muted);display:block;margin-bottom:1px;text-transform:uppercase}
+.g-mini{display:flex;gap:4px}.g-mini i{width:7px;height:7px;border-radius:2px;display:block}
+.row{display:grid;grid-template-columns:26px 30px 1fr auto;align-items:center;gap:9px;padding:8px 14px 8px 11px;border-left:4px solid transparent;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.row .pot{font-family:'Nunito',sans-serif;font-size:10.5px;font-weight:700;color:var(--muted)}
+.badge{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:11px;border:1px solid rgba(0,0,0,.14);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.row .name{font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nat{display:inline-flex;align-items:center;gap:5px;font-family:'Nunito',sans-serif;font-size:9.5px;font-weight:800}
+.natflag{width:18px;height:13px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.12);display:block}
+.nat-Esp{border-left-color:var(--esp)}.t-Esp{color:#f2607f}
+.nat-Eng{border-left-color:var(--eng)}.t-Eng{color:#6fa0f0}
+.foot{margin-top:24px;color:var(--muted);font-size:13px;line-height:1.55;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.foot b{color:var(--silver);font-weight:700}.foot .mono{font-family:'Nunito',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.05em;color:var(--muted)}
+@media (prefers-reduced-motion: reduce){.group{animation:none;opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <a class="brand" href="index.html">Deaf Boys</a>
+  <nav>
+    <a href="index.html#season">Current Season</a>
+    <a href="index.html#tournaments">Tournaments</a>
+    <a href="index.html#squad">Squad</a>
+    <a href="index.html#bestxi">Best XI</a>
+    <a href="index.html#alltime">All-Time</a>
+    <a href="index.html#h2h">H2H</a>
+    <a href="index.html#history">History</a>
+    <a class="active" href="draw.html">Draw</a>
+  </nav>
+</div></header>
+
+<div class="wrap">
+  <div class="eyebrow">Spanish &amp; English clubs · 32 teams · 8 groups</div>
+  <div class="head">
+    <div>
+      <h1>Group Draw</h1>
+      <p class="sub">Random draw: one club from each pot, with exactly two Spanish and two English clubs in every group.</p>
+    </div>
+    <button class="draw-btn" id="drawBtn"><span class="ball"></span><span id="btnLabel">Draw groups</span></button>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div class="rules" id="rules">
+    <span class="rule" data-k="pots"><span class="mark">✓</span>One club from each pot</span>
+    <span class="rule" data-k="esp"><span class="mark">✓</span>Two Spanish per group</span>
+    <span class="rule" data-k="eng"><span class="mark">✓</span>Two English per group</span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="foot">
+    <div>Pool: <b>16</b> Spanish · <b>16</b> English clubs. Every group gets exactly two of each.</div>
+    <div class="mono" id="seed">—</div>
+  </div>
+</div>
+
+<script>
+const FLAGDATA = {"Esp":"data:image/png;base64,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","Eng":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAA8CAYAAADxJz2MAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAnklEQVR42u3XoQ2AQAwF0K6AxiIZgg3YnCDZ5kgH4E5gCnlNvqv4eaqNVmiubW/HtHSTO5UmAAIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBDgvwGzUJWc8zoEzJ1KnWNUWPoBCBAgQIACEOBXAR3SLw9pr5xfGCBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABPs8Nob4NWIbaEnQAAAAASUVORK5CYII="};
+const CLUBS = [{"name":"Real Madrid","pot":1,"nat":"Esp","code":"RMA","bg":"#FFFFFF","fg":"#1B3B6F"},{"name":"Liverpool","pot":1,"nat":"Eng","code":"LIV","bg":"#C8102E","fg":"#FFFFFF"},{"name":"Manchester City","pot":1,"nat":"Eng","code":"MCI","bg":"#6CABDD","fg":"#0A3A66","disp":"Man City"},{"name":"Arsenal","pot":1,"nat":"Eng","code":"ARS","bg":"#EF0107","fg":"#FFFFFF"},{"name":"Barcelona","pot":1,"nat":"Esp","code":"BAR","bg":"#A50044","fg":"#FFE400"},{"name":"Atlético Madrid","pot":1,"nat":"Esp","code":"ATM","bg":"#CB3524","fg":"#FFFFFF","disp":"Atlético Madrid"},{"name":"Aston Villa","pot":1,"nat":"Eng","code":"AVL","bg":"#670E36","fg":"#95BFE5"},{"name":"Manchester United","pot":1,"nat":"Eng","code":"MUN","bg":"#DA020E","fg":"#FBE122","disp":"Man United"},{"name":"Real Betis","pot":2,"nat":"Esp","code":"BET","bg":"#00954C","fg":"#FFFFFF"},{"name":"Villarreal","pot":2,"nat":"Esp","code":"VIL","bg":"#FFE667","fg":"#004B87"},{"name":"Real Sociedad","pot":2,"nat":"Esp","code":"RSO","bg":"#0067B1","fg":"#FFFFFF"},{"name":"Crystal Palace","pot":2,"nat":"Eng","code":"CRY","bg":"#1B458F","fg":"#FFFFFF"},{"name":"Bournemouth","pot":2,"nat":"Eng","code":"BOU","bg":"#DA291C","fg":"#111111"},{"name":"Sunderland","pot":2,"nat":"Eng","code":"SUN","bg":"#EB172B","fg":"#FFFFFF"},{"name":"Celta Vigo","pot":2,"nat":"Esp","code":"CEL","bg":"#8AC3EE","fg":"#E5231F"},{"name":"Brighton & Hove Albion","pot":2,"nat":"Eng","code":"BHA","bg":"#0057B8","fg":"#FFFFFF","disp":"Brighton"},{"name":"Getafe","pot":3,"nat":"Esp","code":"GET","bg":"#005999","fg":"#FFFFFF"},{"name":"Tottenham Hotspur","pot":3,"nat":"Eng","code":"TOT","bg":"#FFFFFF","fg":"#132257","disp":"Tottenham"},{"name":"Chelsea","pot":3,"nat":"Eng","code":"CHE","bg":"#034694","fg":"#FFFFFF"},{"name":"Athletic Bilbao","pot":3,"nat":"Esp","code":"ATH","bg":"#EE2523","fg":"#FFFFFF"},{"name":"Newcastle United","pot":3,"nat":"Eng","code":"NEW","bg":"#241F20","fg":"#FFFFFF","disp":"Newcastle"},{"name":"Sevilla","pot":3,"nat":"Esp","code":"SEV","bg":"#FFFFFF","fg":"#D9182E"},{"name":"Rayo Vallecano","pot":3,"nat":"Esp","code":"RAY","bg":"#FFFFFF","fg":"#E53027"},{"name":"Osasuna","pot":3,"nat":"Esp","code":"OSA","bg":"#0A346F","fg":"#FFFFFF"},{"name":"Brentford","pot":4,"nat":"Eng","code":"BRE","bg":"#E30613","fg":"#FFFFFF"},{"name":"Fulham","pot":4,"nat":"Eng","code":"FUL","bg":"#FFFFFF","fg":"#111111"},{"name":"Everton","pot":4,"nat":"Eng","code":"EVE","bg":"#003399","fg":"#FFFFFF"},{"name":"Leeds United","pot":4,"nat":"Eng","code":"LEE","bg":"#FFFFFF","fg":"#1D428A","disp":"Leeds"},{"name":"Valencia","pot":4,"nat":"Esp","code":"VAL","bg":"#FFFFFF","fg":"#EE7C00"},{"name":"Espanyol","pot":4,"nat":"Esp","code":"ESY","bg":"#0077C8","fg":"#FFFFFF"},{"name":"Alavés","pot":4,"nat":"Esp","code":"ALA","bg":"#005BAC","fg":"#FFFFFF"},{"name":"Elche","pot":4,"nat":"Esp","code":"ELC","bg":"#FFFFFF","fg":"#00944D"}];
+const NAT_NAME = {Esp:"Spain",Eng:"England"};
+const NG = 8;
+const POTS = {1:[],2:[],3:[],4:[]};
+for (const t of CLUBS) POTS[t.pot].push(t);
+
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+class Restart extends Error {}
+function solveOnce(budget){
+  const g=Array.from({length:NG},()=>[]); let nodes=0;
+  const cnt=(grp,c)=>{let n=0;for(const t of grp)if(t.nat===c)n++;return n;};
+  function assign(pi){
+    if(pi===4)return true;
+    const teams=shuffle(POTS[pi+1]); const used=new Array(NG).fill(false);
+    function place(i){
+      if(++nodes>budget)throw new Restart();
+      if(i===teams.length)return assign(pi+1);
+      const t=teams[i];
+      for(const gi of shuffle([...Array(NG).keys()])){
+        if(used[gi]||cnt(g[gi],t.nat)>=2)continue;   // max 2 per nation -> forces exactly 2/2
+        g[gi].push(t);used[gi]=true;
+        if(place(i+1))return true;
+        g[gi].pop();used[gi]=false;
+      }
+      return false;
+    }
+    return place(0);
+  }
+  return assign(0)?g:null;
+}
+function solve(){for(let a=0;a<300;a++){try{const g=solveOnce(3000);if(g)return g;}catch(e){if(!(e instanceof Restart))throw e;}}return null;}
+function checks(groups){
+  let pots=true,esp=true,eng=true;
+  for(const g of groups){
+    if(g.map(t=>t.pot).sort().join()!=="1,2,3,4")pots=false;
+    if(g.filter(t=>t.nat==="Esp").length!==2)esp=false;
+    if(g.filter(t=>t.nat==="Eng").length!==2)eng=false;
+  }
+  return {pots,esp,eng};
+}
+
+const grid=document.getElementById('grid');
+const btn=document.getElementById('drawBtn');
+const btnLabel=document.getElementById('btnLabel');
+const rulesEl=document.getElementById('rules');
+const seedEl=document.getElementById('seed');
+const legendEl=document.getElementById('legend');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+legendEl.innerHTML=['Esp','Eng'].map(n=>
+  `<span class="leg"><img src="${FLAGDATA[n]}" alt="${NAT_NAME[n]}">${n.toUpperCase()} · ${NAT_NAME[n]}</span>`).join('');
+
+function render(groups){
+  grid.innerHTML='';
+  groups.forEach((g,gi)=>{
+    g.sort((a,b)=>a.pot-b.pot);
+    const card=document.createElement('div');
+    card.className='group';
+    if(!reduce) card.style.animationDelay=(gi*55)+'ms';
+    const mini=g.map(t=>`<i style="background:var(--${t.nat.toLowerCase()})"></i>`).join('');
+    let rows='';
+    for(const t of g){
+      rows+=`<div class="row nat-${t.nat}">
+        <span class="pot">P${t.pot}</span>
+        <span class="badge" style="background:${t.bg};color:${t.fg}">${t.code}</span>
+        <span class="name">${t.disp||t.name}</span>
+        <span class="nat"><img class="natflag" src="${FLAGDATA[t.nat]}" alt="${t.nat}"><b class="t-${t.nat}">${t.nat.toUpperCase()}</b></span>
+      </div>`;
+    }
+    card.innerHTML=`<div class="g-head"><div class="g-letter"><small>Group</small>${String.fromCharCode(65+gi)}</div><div class="g-mini">${mini}</div></div>${rows}`;
+    grid.appendChild(card);
+  });
+  const c=checks(groups);
+  rulesEl.querySelectorAll('.rule').forEach(r=>r.classList.toggle('on',!!c[r.dataset.k]));
+  seedEl.textContent='#'+Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+function emptyState(){
+  grid.innerHTML=`<div class="empty"><div>
+    <div class="empty-ball"></div>
+    <p class="empty-t">No draw yet</p>
+    <p class="empty-s">Press <b>Draw groups</b> to generate the eight groups.</p>
+  </div></div>`;
+  rulesEl.querySelectorAll('.rule').forEach(r=>r.classList.remove('on'));
+  seedEl.textContent='—';
+}
+
+let busy=false;
+function draw(){
+  if(busy)return; busy=true;
+  btn.disabled=true; btn.classList.add('spinning'); btnLabel.textContent='Drawing...';
+  const delay=reduce?0:420;
+  setTimeout(()=>{
+    render(solve());
+    btn.disabled=false; btn.classList.remove('spinning'); btnLabel.textContent='Redraw';
+    busy=false;
+  },delay);
+}
+btn.addEventListener('click',draw);
+emptyState();
+</script>
+</body>
+</html>
