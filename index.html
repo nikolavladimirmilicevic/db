@@ -437,6 +437,23 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .xi-MF .xi-dot{background:var(--cyan);color:var(--ink)}
 .xi-FW .xi-dot{background:#f23e50;color:#fff}
 @media(max-width:620px){.xi-row{max-width:none}.xi-player{width:66px}.xi-dot{width:34px;height:34px;font-size:10px}.xi-nm{font-size:10px}}
+.up-tourn{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
+.up-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.up-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px}
+.up-date{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted);margin-left:auto}
+.up-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media(max-width:760px){.up-grid{grid-template-columns:1fr}}
+.up-team{border:1px solid var(--line);border-radius:12px;background:var(--ink-2);padding:12px 14px}
+.up-team-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
+.up-club{font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;color:var(--white)}
+.up-stars{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:#f5c518;flex:0 0 auto;white-space:nowrap}
+.up-lines{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:var(--silver)}
+.up-lines i,.up-avg i{color:var(--muted);font-style:normal;font-weight:800;font-size:9.5px;letter-spacing:.06em;margin-right:3px}
+.up-avg{color:var(--cyan-2)}
+.up-best{display:flex;flex-direction:column;gap:3px;border-top:1px solid rgba(170,160,220,.1);padding-top:8px}
+.up-bp{font-family:'Nunito',sans-serif;font-size:12.5px;color:var(--white)}
+.up-bp em{font-style:normal;color:var(--muted);font-size:9.5px;font-weight:800;letter-spacing:.05em;display:inline-block;width:24px}
+.up-bp b{color:var(--cyan-2);font-weight:800}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
 
@@ -537,6 +554,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
     <div class="idx">02 / RESULTS</div>
     <div class="sec-title"><h2>Tournaments</h2><p>Every event this season, newest first. Who played, which club, where they finished and the points earned.</p></div>
   </div>
+  <div id="upcoming"></div>
   <div class="tourn-filter">
     <div class="tf-chips">
       <button class="tf-chip active" data-cat="all">All</button>
@@ -818,6 +836,7 @@ let CURRENT_PTS = {};
 let KIT_COLOR = {};
 let LAST_STANDINGS = null;
 let CUR_TOURNAMENTS = [];
+let UPCOMING_TOURNAMENTS = [];
 let RACE = null;
 let SCORERS_LIST = [];
 let SCORER_SORT = {key:"tot", dir:-1};
@@ -1164,6 +1183,26 @@ function buildTOTS(TOURS, SCORERS, elId){
   el.innerHTML = xi.length ? (`<div class="tots-form">Formation ${formation}</div><div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`) : "";
 }
 function computeTOTS(){ buildTOTS(typeof CUR_TOURNAMENTS!=="undefined"?CUR_TOURNAMENTS:[], typeof SCORERS_LIST!=="undefined"?SCORERS_LIST:[], "tots-pitch"); }
+function renderUpcoming(){
+  const el=document.getElementById("upcoming"); if(!el) return;
+  const list=(UPCOMING_TOURNAMENTS||[]).slice().sort((a,b)=> (tournKey(a.date)||9e12)-(tournKey(b.date)||9e12) || a.idx-b.idx);
+  if(!list.length){ el.innerHTML=""; return; }
+  const catName=c=>({M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[c]||"");
+  const num=v=>{ const n=parseFloat(String(v||"").replace(",",".")); return isNaN(n)?null:n; };
+  const starStr=v=>{ const n=num(v); return n==null?"":(n+"\u2605"); };
+  el.innerHTML = `<div class="perf-head">Upcoming <span>teams available in the next tournaments, with every star and rating for your pick</span></div>`
+    + list.map(t=>{
+      const teams=(t.allTeams||[]).slice().sort((a,b)=>(num(b.avg)||0)-(num(a.avg)||0));
+      const cards=teams.map(tm=>{
+        const lines=[["ATT",tm.lfw],["MID",tm.lmf],["DEF",tm.ldf]].filter(x=>x[1]).map(x=>`<span><i>${x[0]}</i> ${x[1]}</span>`).join("");
+        const best=(tm.best||[]).map(b=>`<span class="up-bp"><em>${b.pos}</em> ${b.name}${b.rating?` <b>${b.rating}</b>`:""}</span>`).join("");
+        return `<div class="up-team"><div class="up-team-top"><span class="up-club">${tm.club}</span><span class="up-stars">${starStr(tm.stars)}</span></div>`
+          + `<div class="up-lines">${lines}${tm.avg?`<span class="up-avg"><i>AVG</i> ${tm.avg}</span>`:""}</div>`
+          + (best?`<div class="up-best">${best}</div>`:"") + `</div>`;
+      }).join("");
+      return `<div class="up-tourn"><div class="up-head"><span class="tourn-cat cat-${t.catCode}">${catName(t.catCode)}</span><span class="up-name">${tr(t.name)}</span><span class="up-date">${t.date||"Date TBD"}</span></div><div class="up-grid">${cards}</div></div>`;
+    }).join("");
+}
 function renderLatest(){
   const el=document.getElementById("latest"); if(!el) return;
   const list=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(b.date)-tournKey(a.date) || (b.idx||0)-(a.idx||0));
@@ -1660,27 +1699,33 @@ function parse26tu(csvText){
                  fw:tc("Najbolji FW"), mf:tc("Najbolji MF"), df:tc("Najbolji DF"), gk:tc("Najbolji GK"),
                  t1:tc("Takmičar 1","Takmicar 1","Takmičar"), t2:tc("Takmičar 2","Takmicar 2"),
                  place:tc("Mesto"), pts:tc("Bodovi") };
-    const teams = [], allBest = []; let j = h+1;
+    const ci2 = { lfw:tc("FW"), lmf:tc("MF"), ldf:tc("DF") };
+    const teams = [], allBest = [], allTeams = []; let j = h+1;
     for(; j<rows.length; j++){
       const tr = rows[j] || [];
       if(isLabel(tr)) break;
+      const club = ci.tim>=0?clean(tr[ci.tim]):"";
+      if(!club) continue;
       const bp = (k,pos)=>{ if(k<0) return null; const nm=clean(tr[k]); if(!nm) return null; return {pos, name:nm, rating:clean(tr[k+1])}; };
       const best4 = [bp(ci.fw,"FW"), bp(ci.mf,"MF"), bp(ci.df,"DF"), bp(ci.gk,"GK")].filter(Boolean);
       best4.forEach(b=>allBest.push(b));
       const t1 = ci.t1>=0?clean(tr[ci.t1]):"", t2 = ci.t2>=0?clean(tr[ci.t2]):"";
-      if(!t1 && !t2) continue;
-      teams.push({
-        club: ci.tim>=0?clean(tr[ci.tim]):"",
+      const teamObj = {
+        club,
         stars: ci.stars>=0?clean(tr[ci.stars]):"",
+        lfw: ci2.lfw>=0?clean(tr[ci2.lfw]):"", lmf: ci2.lmf>=0?clean(tr[ci2.lmf]):"", ldf: ci2.ldf>=0?clean(tr[ci2.ldf]):"",
         avg: ci.avg>=0?clean(tr[ci.avg]):"",
         by: [t1,t2].filter(Boolean).join(" + "),
         place: ci.place>=0?parseInt(clean(tr[ci.place]),10)||null:null,
         points: ci.pts>=0?parseInt(clean(tr[ci.pts]),10)||0:0,
         best: best4
-      });
+      };
+      allTeams.push(teamObj);
+      if(t1 || t2) teams.push(teamObj);
     }
     teams.sort((a,b)=>(a.place||99)-(b.place||99));
-    if(name && teams.length) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams, allBest, idx: out.length });
+    const upcoming = !allTeams.some(t=>t.place!=null);
+    if(name && (teams.length || allTeams.length)) out.push({ date, name, cat:catMap[cat]||cat, catCode:cat, teams, allTeams, allBest, upcoming, idx: out.length });
     i = j-1;
   }
   return out.sort((a,b)=> tournKey(b.date)-tournKey(a.date) || b.idx-a.idx);
@@ -1688,7 +1733,7 @@ function parse26tu(csvText){
 async function tryLiveTournaments(){
   const list = await loadTournaments();
   if(!list.length) throw new Error("no tournaments");
-  CUR_TOURNAMENTS = list; renderTournsView(); renderLatest(); computeTOTS();
+  UPCOMING_TOURNAMENTS = list.filter(t=>t.upcoming); CUR_TOURNAMENTS = list.filter(t=>!t.upcoming); renderTournsView(); renderLatest(); computeTOTS(); renderUpcoming();
   if(document.getElementById("h2h-result")) renderH2H(); renderRace();
 }
 
@@ -1796,7 +1841,7 @@ setTimeout(()=>{
     document.getElementById("sb-scorer").innerHTML = `${tg===tt?SB_STAR:""}${surname(tg)} <small>${tg.g}</small>`;
     document.getElementById("sb-assist").innerHTML = `${ta===tt?SB_STAR:""}${surname(ta)} <small>${ta.a}</small>`;
   }
-  if(still("tourns")){ CUR_TOURNAMENTS = SAMPLE_TOURNAMENTS; renderTournsView(); renderLatest(); computeTOTS(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
+  if(still("tourns")){ UPCOMING_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>t.upcoming); CUR_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>!t.upcoming); renderTournsView(); renderLatest(); computeTOTS(); renderUpcoming(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
   if(still("alltime-table")){ renderAllTime(VECNA); }
 }, 3500);
 
