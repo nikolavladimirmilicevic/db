@@ -1185,7 +1185,7 @@ function buildTOTS(TOURS, SCORERS, elId){
 function computeTOTS(){ buildTOTS(typeof CUR_TOURNAMENTS!=="undefined"?CUR_TOURNAMENTS:[], typeof SCORERS_LIST!=="undefined"?SCORERS_LIST:[], "tots-pitch"); }
 function renderUpcoming(){
   const el=document.getElementById("upcoming"); if(!el) return;
-  const list=(UPCOMING_TOURNAMENTS||[]).slice().sort((a,b)=> (tournKey(a.date)||9e12)-(tournKey(b.date)||9e12) || a.idx-b.idx);
+  const list=(UPCOMING_TOURNAMENTS||[]).filter(t=>t.date && String(t.date).trim()).sort((a,b)=> tournKey(a.date)-tournKey(b.date) || a.idx-b.idx);
   if(!list.length){ el.innerHTML=""; return; }
   const catName=c=>({M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[c]||"");
   const num=v=>{ const n=parseFloat(String(v||"").replace(",",".")); return isNaN(n)?null:n; };
