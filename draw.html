@@ -37,6 +37,35 @@ a.back-link:hover{color:var(--cyan-2)}
 @media(max-width:760px){.sec-title{flex-direction:column;align-items:stretch;gap:6px}}
 .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.3,1)}
 .reveal.in{opacity:1;transform:none}
+
+.draw-tabs{display:flex;gap:8px;margin:4px 0 24px;flex-wrap:wrap}
+.draw-tab{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;letter-spacing:.03em;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 18px;cursor:pointer;transition:.2s}
+.draw-tab:hover{color:var(--silver)}
+.draw-tab.active{color:var(--ink);background:var(--cyan-2);border-color:var(--cyan-2)}
+.draw-panel[hidden]{display:none}
+.draw-sub{font-family:'Fredoka',sans-serif;font-weight:600;font-size:18px;color:var(--white);margin-bottom:18px}
+.draw-sub span{display:block;font-family:'Nunito',sans-serif;font-weight:600;font-size:13px;color:var(--muted);margin-top:3px;max-width:60ch;line-height:1.5}
+.ord-inputs{display:flex;flex-direction:column;gap:10px;max-width:540px}
+.ord-row{display:flex;align-items:center;gap:12px}
+.ord-rank{width:24px;height:24px;border-radius:50%;background:var(--surface-2);color:var(--silver);font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ord-name{flex:1 1 auto;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--white);font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;padding:11px 14px;outline:none}
+.ord-name:focus{border-color:var(--cyan)}
+.ord-name::placeholder{color:var(--muted);font-weight:600}
+.ord-balls{font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;letter-spacing:.04em;color:var(--gold);flex:0 0 auto;white-space:nowrap}
+.ord-del{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0 4px;flex:0 0 auto}
+.ord-del:hover{color:#f2607f}
+.ord-actions{display:flex;gap:12px;align-items:center;margin:18px 0 0;flex-wrap:wrap}
+.ord-add{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;letter-spacing:.03em;color:var(--silver);background:transparent;border:1px dashed var(--line);border-radius:10px;padding:12px 18px;cursor:pointer;transition:.2s}
+.ord-add:hover:not([disabled]){border-color:var(--cyan);color:var(--cyan-2)}
+.ord-add[disabled]{opacity:.4;cursor:not-allowed}
+.ord-empty{color:var(--muted);font-size:14px;margin-top:20px}
+.ord-pick{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);max-width:540px}
+.ord-pick:last-child{border-bottom:none}
+.ord-pos{width:27px;height:27px;border-radius:50%;background:var(--cyan);color:var(--ink);font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.ord-pick-name{font-family:'Nunito',sans-serif;font-weight:700;font-size:16px;color:var(--white);flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ord-balls-out{display:flex;gap:5px;flex-wrap:wrap;flex:0 0 auto}
+.oball{width:24px;height:24px;border-radius:6px;background:var(--surface-2);color:var(--muted);font-family:'Nunito',sans-serif;font-weight:800;font-size:11.5px;display:flex;align-items:center;justify-content:center}
+.oball.min{background:var(--gold);color:#22160a}
 footer{border-top:1px solid var(--line);padding:44px 0;color:var(--muted);font-size:13px;margin-top:20px}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
 footer .src{font-family:'Nunito',sans-serif;font-size:11px;letter-spacing:.04em}
@@ -112,10 +141,24 @@ h2{font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font
 </div></header>
 <section class="wrap reveal">
   <a class="back-link" href="index.html#top">&larr; Home</a>
-  <div class="eyebrow"><span class="dot"></span> <span>32 clubs · 8 groups</span></div>
+  <div class="eyebrow"><span class="dot"></span> <span>League draws</span></div>
   <div class="sec-head">
-    <div class="sec-title"><h2>Group Draw</h2><p>Random draw: one club from each pot, with exactly two Spanish and two English clubs in every group.</p></div>
+    <div class="sec-title"><h2>Draws</h2><p>Random draws for the league, from pick order to the group stage.</p></div>
   </div>
+  <div class="draw-tabs">
+    <button class="draw-tab active" data-panel="order">Pick Order</button>
+    <button class="draw-tab" data-panel="groups">Group Draw</button>
+  </div>
+  <div class="draw-panel" id="panel-order">
+    <div class="draw-sub">Pick order draw <span>List competitors by table standing, best at the top. The weakest draws the most balls; whoever draws the lowest number picks first.</span></div>
+    <div class="ord-inputs" id="ordInputs"></div>
+    <div class="ord-actions">
+      <button class="ord-add" id="ordAdd">+ Add competitor</button>
+      <button class="draw-btn" id="ordDraw"><span class="ball"></span><span>Draw order</span></button>
+    </div>
+    <div class="ord-result" id="ordResult"></div>
+  </div>
+  <div class="draw-panel" id="panel-groups" hidden>
   <button class="draw-btn" id="drawBtn"><span class="ball"></span><span id="btnLabel">Draw groups</span></button>
   <div class="legend" id="legend"></div>
   <div class="rules" id="rules">
@@ -127,6 +170,7 @@ h2{font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font
   <div class="foot">
     <div>Pool: <b>16</b> Spanish · <b>16</b> English clubs. Every group gets exactly two of each.</div>
     <div class="mono" id="seed">—</div>
+  </div>
   </div>
 </section>
 <footer id="site-footer">
@@ -145,6 +189,35 @@ document.querySelectorAll(".top nav a").forEach(a=>a.addEventListener("click",()
 (function(){ const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add("in"); }),{threshold:.08});
   document.querySelectorAll(".reveal").forEach(el=>io.observe(el));
   setTimeout(()=>document.querySelectorAll(".reveal").forEach(el=>el.classList.add("in")),1600); })();
+document.querySelectorAll(".draw-tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".draw-tab").forEach(x=>x.classList.toggle("active",x===t));
+  document.querySelectorAll(".draw-panel").forEach(pnl=>{ pnl.hidden = (pnl.id!=="panel-"+t.dataset.panel); });
+}));
+function ordShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+let ordVals=["",""]; const ORD_MIN=2, ORD_MAX=4;
+function renderOrd(){
+  const c=document.getElementById("ordInputs"); if(!c) return;
+  c.innerHTML = ordVals.map((v,i)=>`<div class="ord-row"><span class="ord-rank">${i+1}</span><input class="ord-name" data-i="${i}" placeholder="${i===0?"Top of the table":(i===ordVals.length-1?"Bottom of the table":"Competitor")}" value="${(v||"").replace(/"/g,"&quot;")}"><span class="ord-balls">${i+1} ${i+1===1?"ball":"balls"}</span>${ordVals.length>ORD_MIN?`<button class="ord-del" data-i="${i}" aria-label="Remove">\u00d7</button>`:""}</div>`).join("");
+  c.querySelectorAll(".ord-name").forEach(inp=>inp.addEventListener("input",()=>{ ordVals[+inp.dataset.i]=inp.value; }));
+  c.querySelectorAll(".ord-del").forEach(b=>b.addEventListener("click",()=>{ ordVals.splice(+b.dataset.i,1); renderOrd(); }));
+  const add=document.getElementById("ordAdd"); if(add) add.disabled = ordVals.length>=ORD_MAX;
+}
+function drawOrder(){
+  const comps=ordVals.map(v=>(v||"").trim()).filter(Boolean);
+  const res=document.getElementById("ordResult"); if(!res) return;
+  if(comps.length<2){ res.innerHTML=`<div class="ord-empty">Add at least two competitors to draw.</div>`; return; }
+  const K=comps.length, total=K*(K+1)/2;
+  const pool=ordShuffle(Array.from({length:total},(_,i)=>i+1));
+  let idx=0;
+  const draws=comps.map((name,i)=>{ const count=i+1; const balls=pool.slice(idx,idx+count).sort((a,b)=>a-b); idx+=count; return {name,count,balls,min:Math.min.apply(null,balls)}; });
+  const order=draws.slice().sort((a,b)=>a.min-b.min);
+  res.innerHTML = `<div class="draw-sub" style="margin:26px 0 14px">Pick order <span>Lowest number picks first.</span></div>`
+    + order.map((d,p)=>`<div class="ord-pick"><span class="ord-pos">${p+1}</span><span class="ord-pick-name">${d.name}</span><span class="ord-balls-out">${d.balls.map(b=>`<span class="oball${b===d.min?" min":""}">${b}</span>`).join("")}</span></div>`).join("");
+}
+(function(){ renderOrd();
+  const a=document.getElementById("ordAdd"); if(a) a.addEventListener("click",()=>{ if(ordVals.length<ORD_MAX){ ordVals.push(""); renderOrd(); } });
+  const d=document.getElementById("ordDraw"); if(d) d.addEventListener("click",drawOrder);
+})();
 </script>
 <script>
 const FLAGDATA = {"Esp":"data:image/png;base64,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","Eng":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAA8CAYAAADxJz2MAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAnklEQVR42u3XoQ2AQAwF0K6AxiIZgg3YnCDZ5kgH4E5gCnlNvqv4eaqNVmiubW/HtHSTO5UmAAIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBDgvwGzUJWc8zoEzJ1KnWNUWPoBCBAgQIACEOBXAR3SLw9pr5xfGCBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABPs8Nob4NWIbaEnQAAAAASUVORK5CYII="};
