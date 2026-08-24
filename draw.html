@@ -5,9 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Group Draw · Deaf Boys</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://docs.google.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// start the data requests before anything else renders
+var DRAW_PUB_ID="2PACX-1vRcuN1Z2cgPC9e4sx3j-8eR1wu0_SCIkJMXT8ysHhK2p3moGSD5tpYIuX6rZRgleylELTmRryB6pIsI";
+function drawCsvUrl(gid){ return "https://docs.google.com/spreadsheets/d/e/"+DRAW_PUB_ID+"/pub?gid="+gid+"&single=true&output=csv"; }
+var DRAW_GID_TABLE="1388852135", DRAW_GID_TOURN="2032154872";
+function grab(gid){ return fetch(drawCsvUrl(gid),{mode:"cors"}).then(function(r){ if(!r.ok) throw 0; return r.text(); }); }
+var P_TABLE=grab(DRAW_GID_TABLE), P_TOURN=grab(DRAW_GID_TOURN);
+P_TABLE.catch(function(){}); P_TOURN.catch(function(){});
+function cacheGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function cacheSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+</script>
 <style>
 :root{--ink:#201b45;--ink-2:#2a2358;--surface:#322a68;--surface-2:#3d3479;--line:rgba(170,160,220,.16);
   --white:#f4f3fc;--muted:#a49dcf;--silver:#cfcbe9;--cyan:#00b8e8;--cyan-2:#43cdf3;--cyan-deep:#0090ba;--purple:#6060c8;--purple-2:#8686de;--steel:#6f7bc4;
@@ -246,12 +257,23 @@ function rndInt(n){
 }
 function rndId(len){ const A="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"; let o=""; for(let i=0;i<len;i++) o+=A[rndInt(A.length)]; return o; }
 function ordShuffle(a){ for(let i=a.length-1;i>0;i--){ const j=rndInt(i+1); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+// minimal CSV reader (quotes aware), replaces the external parser
+function csvRows(text){
+  const rows=[]; let row=[], cur="", q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){ cur+='"'; i++; } else q=false; } else cur+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===",") { row.push(cur); cur=""; }
+    else if(ch==="\n"){ row.push(cur); rows.push(row); row=[]; cur=""; }
+    else if(ch!=="\r") cur+=ch;
+  }
+  row.push(cur); rows.push(row); return rows;
+}
 // active competitors from the season table
-const DRAW_PUB_ID="2PACX-1vRcuN1Z2cgPC9e4sx3j-8eR1wu0_SCIkJMXT8ysHhK2p3moGSD5tpYIuX6rZRgleylELTmRryB6pIsI";
-const drawCsvUrl = gid => `https://docs.google.com/spreadsheets/d/e/${DRAW_PUB_ID}/pub?gid=${gid}&single=true&output=csv`;
 let ACTIVE=[], ACTIVE_STATE="loading";
 function parseStandings(csvText){
-  const rows=Papa.parse(csvText,{skipEmptyLines:false}).data;
+  const rows=csvRows(csvText);
   const clean=c=>(c==null?"":String(c)).trim();
   const hIdx=rows.findIndex(r=>r.some(c=>clean(c)==="Takmi\u010dar"));
   if(hIdx<0) return [];
@@ -305,7 +327,7 @@ function drawPairs(){
 // tournament (unplayed ad hoc from the sheet)
 function normHeader(str){ return (str==null?"":String(str)).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim(); }
 function parseTournaments(csvText){
-  const rows=Papa.parse(csvText,{skipEmptyLines:false}).data;
+  const rows=csvRows(csvText);
   const clean=c=>(c==null?"":String(c)).trim();
   const isLabel=r=>(r||[]).some(c=>normHeader(c)==="naziv");
   const out=[];
@@ -351,9 +373,12 @@ function drawTourn(){
 async function shareGroups(){
   const grid=document.getElementById("grid"); const btn=document.getElementById("shareGroups");
   if(!grid || !grid.querySelector(".group")){ if(btn){ const o=btn.textContent; btn.textContent="Draw the groups first"; setTimeout(()=>btn.textContent=o,1600); } return; }
-  if(typeof html2canvas==="undefined"){ return; }
   const lbl=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Rendering\u2026"; }
+  if(typeof html2canvas==="undefined"){
+    try{ await new Promise((ok,bad)=>{ const sc=document.createElement("script"); sc.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"; sc.onload=ok; sc.onerror=bad; document.head.appendChild(sc); }); }
+    catch(e){ if(btn){ btn.disabled=false; btn.textContent=lbl||"Share as image"; } return; }
+  }
   grid.classList.add("capture-ready");
   await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   try{
@@ -380,12 +405,29 @@ refreshOrder(); refreshPairs(); renderTournPool();
   const p=document.getElementById("pairDraw"); if(p) p.addEventListener("click",drawPairs);
   const td=document.getElementById("tournDraw"); if(td) td.addEventListener("click",drawTourn);
   const sg=document.getElementById("shareGroups"); if(sg) sg.addEventListener("click",shareGroups); }
-fetch(drawCsvUrl("1388852135"),{mode:"cors"}).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{
-  ACTIVE=parseStandings(txt); ACTIVE_STATE=ACTIVE.length?"ok":"empty";
+function applyStandings(txt, fromCache){
+  const list=parseStandings(txt);
+  if(!list.length) return false;
+  const changed = list.join("|")!==ACTIVE.join("|");
+  ACTIVE=list; ACTIVE_STATE="ok";
   if(ACTIVE.length===4 && pairsSel.size===0){ ACTIVE.forEach(n=>pairsSel.add(n)); }
-  refreshOrder(); refreshPairs();
-}).catch(()=>{ ACTIVE_STATE="error"; refreshOrder(); refreshPairs(); });
-fetch(drawCsvUrl("2032154872"),{mode:"cors"}).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{ const all=parseTournaments(txt); TOURN_POOL=all.filter(t=>t.upcoming && (t.catCode||"").trim().toUpperCase()==="D").map(t=>t.name); TOURN_STATE="ok"; renderTournPool(); }).catch(()=>{ TOURN_STATE="error"; renderTournPool(); });
+  if(changed || fromCache){ refreshOrder(); refreshPairs(); }
+  return true;
+}
+// paint instantly from the last visit, then refresh in the background
+const cachedTable=cacheGet("db_draw_table");
+if(cachedTable){ try{ applyStandings(cachedTable,true); }catch(e){} }
+P_TABLE.then(txt=>{ cacheSet("db_draw_table",txt); applyStandings(txt,false); })
+  .catch(()=>{ if(!ACTIVE.length){ ACTIVE_STATE="error"; refreshOrder(); refreshPairs(); } });
+function applyTourns(txt){
+  const all=parseTournaments(txt);
+  TOURN_POOL=all.filter(t=>t.upcoming && (t.catCode||"").trim().toUpperCase()==="D").map(t=>t.name);
+  TOURN_STATE="ok"; renderTournPool();
+}
+const cachedTourn=cacheGet("db_draw_tourn");
+if(cachedTourn){ try{ applyTourns(cachedTourn); }catch(e){} }
+P_TOURN.then(txt=>{ cacheSet("db_draw_tourn",txt); applyTourns(txt); })
+  .catch(()=>{ if(TOURN_STATE==="loading"){ TOURN_STATE="error"; renderTournPool(); } });
 </script>
 <script>
 const FLAGDATA = {"Esp":"data:image/png;base64,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","Eng":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAA8CAYAAADxJz2MAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAnklEQVR42u3XoQ2AQAwF0K6AxiIZgg3YnCDZ5kgH4E5gCnlNvqv4eaqNVmiubW/HtHSTO5UmAAIECBAgQIAAAQIECBAgQIAAAQIECBAgQIAAAQIECBDgvwGzUJWc8zoEzJ1KnWNUWPoBCBAgQIACEOBXAR3SLw9pr5xfGCBAgAABAgQIECBAgAABAgQIECBAgAABAgQIECBAgAABPs8Nob4NWIbaEnQAAAAASUVORK5CYII="};
