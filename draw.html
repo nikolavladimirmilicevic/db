@@ -46,10 +46,10 @@ a.back-link:hover{color:var(--cyan-2)}
 .ord-pot.p2{color:var(--purple-2);border:1px solid rgba(134,134,222,.5)}
 .pair-out{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .pair-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 24px;display:flex;align-items:center;gap:11px;box-shadow:var(--shadow)}
-.pair-a,.pair-b{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px;color:var(--white)}
+.pair-a,.pair-b{font-family:'Nunito',sans-serif;font-weight:800;font-size:18px;color:var(--white)}
 .pair-amp{color:var(--cyan-2);font-weight:800;font-size:16px}
 .pair-vs{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-.tourn-pick{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(26px,5vw,42px);color:var(--cyan-2);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 30px;text-align:center;box-shadow:var(--shadow);max-width:640px}
+.tourn-pick{font-family:'Nunito',sans-serif;font-weight:800;font-size:clamp(24px,4.5vw,38px);color:var(--cyan-2);background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px 30px;text-align:center;box-shadow:var(--shadow);max-width:640px}
 .share-btn{background:transparent;border:1px solid var(--line);color:var(--silver);font-family:'Nunito',sans-serif;font-weight:700;font-size:12px;letter-spacing:.04em;padding:9px 18px;border-radius:999px;cursor:pointer;transition:border-color .2s,color .2s;margin-top:20px}
 .share-btn:hover:not([disabled]){border-color:var(--cyan);color:var(--cyan-2)}
 .share-btn[disabled]{opacity:.6;cursor:progress}
@@ -124,6 +124,7 @@ h2{font-family:'Nunito',sans-serif;font-weight:900;text-transform:uppercase;font
 .empty-s{margin:7px 0 0;color:var(--muted);font-size:15px}.empty-s b{color:var(--gold);font-weight:700}
 @media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
 .group{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);animation:rise .45s cubic-bezier(.2,.7,.25,1) forwards}
+.grid.capture-ready .group{animation:none !important;opacity:1 !important;transform:none !important}
 @keyframes rise{to{opacity:1;transform:none}}
 .g-head{display:flex;align-items:center;justify-content:space-between;padding:11px 14px 9px;border-bottom:1px solid var(--line)}
 .g-letter{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--white);font-size:28px;line-height:1}
@@ -343,8 +344,17 @@ async function shareGroups(){
   if(typeof html2canvas==="undefined"){ return; }
   const lbl=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="Rendering\u2026"; }
+  grid.classList.add("capture-ready");
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
   try{
-    const canvas=await html2canvas(grid,{backgroundColor:getComputedStyle(document.body).backgroundColor||"#201b45",scale:2,useCORS:true});
+    const canvas=await html2canvas(grid,{
+      backgroundColor:getComputedStyle(document.body).backgroundColor||"#201b45",
+      scale:2, useCORS:true,
+      scrollX:0, scrollY:-window.scrollY,
+      windowWidth:document.documentElement.scrollWidth,
+      windowHeight:document.documentElement.scrollHeight,
+      width:grid.scrollWidth, height:grid.scrollHeight
+    });
     await new Promise(res=>canvas.toBlob(async blob=>{
       try{
         const file=new File([blob],"deaf-boys-group-draw.png",{type:"image/png"});
@@ -353,14 +363,18 @@ async function shareGroups(){
       }catch(e){}
       res();
     },"image/png"));
-  } finally { if(btn){ btn.disabled=false; btn.textContent=lbl||"Share as image"; } }
+  } finally { grid.classList.remove("capture-ready"); if(btn){ btn.disabled=false; btn.textContent=lbl||"Share as image"; } }
 }
 refreshOrder(); refreshPairs(); renderTournPool();
 { const d=document.getElementById("ordDraw"); if(d) d.addEventListener("click",drawOrder);
   const p=document.getElementById("pairDraw"); if(p) p.addEventListener("click",drawPairs);
   const td=document.getElementById("tournDraw"); if(td) td.addEventListener("click",drawTourn);
   const sg=document.getElementById("shareGroups"); if(sg) sg.addEventListener("click",shareGroups); }
-fetch(drawCsvUrl("1388852135"),{mode:"cors"}).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{ ACTIVE=parseStandings(txt); ACTIVE_STATE=ACTIVE.length?"ok":"empty"; refreshOrder(); refreshPairs(); }).catch(()=>{ ACTIVE_STATE="error"; refreshOrder(); refreshPairs(); });
+fetch(drawCsvUrl("1388852135"),{mode:"cors"}).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{
+  ACTIVE=parseStandings(txt); ACTIVE_STATE=ACTIVE.length?"ok":"empty";
+  if(ACTIVE.length===4 && pairsSel.size===0){ ACTIVE.forEach(n=>pairsSel.add(n)); }
+  refreshOrder(); refreshPairs();
+}).catch(()=>{ ACTIVE_STATE="error"; refreshOrder(); refreshPairs(); });
 fetch(drawCsvUrl("2032154872"),{mode:"cors"}).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{ const all=parseTournaments(txt); TOURN_POOL=all.filter(t=>t.upcoming && (t.catCode||"").trim().toUpperCase()==="D").map(t=>t.name); TOURN_STATE="ok"; renderTournPool(); }).catch(()=>{ TOURN_STATE="error"; renderTournPool(); });
 </script>
 <script>
