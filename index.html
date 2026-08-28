@@ -113,13 +113,12 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:15px}
 .ttl-n{font-family:'Nunito',sans-serif;font-weight:900;color:#f5c518}
 .pts{font-family:'Nunito',sans-serif;font-weight:900;font-size:17px}
-.pts.p1{color:var(--cyan-2)}
 .form{display:flex;gap:4px;justify-content:center}
 .form span{width:20px;height:18px;border-radius:4px;font-family:'Nunito',sans-serif;font-size:9.5px;font-weight:700;display:grid;place-items:center}
-.f-t{background:rgba(0,184,232,.20);color:var(--cyan-2)}
-.f-f{background:rgba(194,210,206,.14);color:var(--silver)}
-.f-s{background:rgba(150,142,195,.14);color:var(--muted)}
-.f-x{background:rgba(150,142,195,.06);color:rgba(150,142,195,.5)}
+.f-1{background:rgba(245,197,24,.16);color:#f5c518}
+.f-2{background:rgba(223,227,239,.14);color:#dfe3ef}
+.f-3{background:rgba(216,162,106,.16);color:#d8a26a}
+.f-x{background:rgba(150,142,195,.08);color:var(--muted)}
 
 .mini-scorers{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
 .scorer{border:1px solid var(--line);border-radius:12px;padding:16px 18px;background:var(--surface)}
@@ -992,7 +991,7 @@ function renderStandings(rows, target="standings"){
   if(target==="standings") LAST_STANDINGS = rows;
   document.getElementById(target).innerHTML = rows.map(r=>{
     const form = r.form.map(p=>{
-      const cls = p===1?'f-t':p===2?'f-f':(p===3||p===4)?'f-s':'f-x';
+      const cls = p===1?'f-1':p===2?'f-2':p===3?'f-3':'f-x';
       return `<span class="${cls}">${p}</span>`;
     }).join("");
     return `<tr>
