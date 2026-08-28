@@ -447,7 +447,16 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .up-team{border:1px solid var(--line);border-radius:12px;background:var(--ink-2);padding:12px 14px}
 .up-team-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:8px}
 .up-club{font-family:'Fredoka',sans-serif;font-weight:600;font-size:15px;color:var(--white)}
-.up-stars{font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:#f5c518;flex:0 0 auto;white-space:nowrap}
+.up-stars{display:inline-flex;gap:1px;flex:0 0 auto;white-space:nowrap;line-height:1}
+.st{position:relative;display:inline-block;width:14px;height:14px;font-size:14px;line-height:14px}
+.st-off{color:rgba(255,255,255,.16)}
+.st-on{position:absolute;left:0;top:0;overflow:hidden;color:#f5c518;text-shadow:0 0 6px rgba(245,197,24,.45)}
+.rt{font-weight:800;font-variant-numeric:tabular-nums}
+.r-elite{color:#ffd447}.r-great{color:#43cdf3}.r-good{color:#5fd08a}.r-ok{color:#cfcbe9}.r-mid{color:#a49dcf}.r-low{color:#8a83b4}
+.up-team.is-taken{border-color:rgba(0,184,232,.34)}
+.up-taken{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(170,160,220,.1)}
+.up-taker{display:inline-flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;color:var(--white);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 7px}
+.up-kit{width:8px;height:8px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
 .up-lines{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:8px;font-family:'Nunito',sans-serif;font-size:12.5px;font-weight:700;color:var(--silver)}
 .up-lines i,.up-avg i{color:var(--muted);font-style:normal;font-weight:800;font-size:9.5px;letter-spacing:.06em;margin-right:3px}
 .up-avg{color:var(--cyan-2)}
@@ -1196,16 +1205,25 @@ function renderUpcoming(){
   if(!list.length){ el.innerHTML=""; return; }
   const catName=c=>({M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[c]||"");
   const num=v=>{ const n=parseFloat(String(v||"").replace(",",".")); return isNaN(n)?null:n; };
-  const starStr=v=>{ const n=num(v); return n==null?"":(n+"\u2605"); };
+  const starRow=v=>{ const n=num(v); if(n==null) return "";
+    let h="";
+    for(let i=1;i<=5;i++){ const f=Math.max(0,Math.min(1,n-(i-1)));
+      h+=`<span class="st"><span class="st-off">\u2605</span><span class="st-on" style="width:${f*100}%">\u2605</span></span>`; }
+    return `<span class="up-stars" title="${String(v)} stars">${h}</span>`; };
+  const rateCls=v=>{ const n=num(v); if(n==null) return "";
+    if(n>=90) return "r-elite"; if(n>=85) return "r-great"; if(n>=80) return "r-good"; if(n>=75) return "r-ok"; if(n>=70) return "r-mid"; return "r-low"; };
+  const rate=v=> v?`<b class="rt ${rateCls(v)}">${v}</b>`:"";
   el.innerHTML = `<div class="perf-head">Upcoming <span>teams available in the next tournaments, with every star and rating for your pick</span></div>`
     + list.map(t=>{
       const teams=(t.allTeams||[]).slice().sort((a,b)=>(num(b.avg)||0)-(num(a.avg)||0));
       const cards=teams.map(tm=>{
-        const lines=[["ATT",tm.lfw],["MID",tm.lmf],["DEF",tm.ldf]].filter(x=>x[1]).map(x=>`<span><i>${x[0]}</i> ${x[1]}</span>`).join("");
-        const best=(tm.best||[]).map(b=>`<span class="up-bp"><em>${b.pos}</em> ${b.name}${b.rating?` <b>${b.rating}</b>`:""}</span>`).join("");
-        return `<div class="up-team"><div class="up-team-top"><span class="up-club">${tm.club}</span><span class="up-stars">${starStr(tm.stars)}</span></div>`
-          + `<div class="up-lines">${lines}${tm.avg?`<span class="up-avg"><i>AVG</i> ${tm.avg}</span>`:""}</div>`
-          + (best?`<div class="up-best">${best}</div>`:"") + `</div>`;
+        const lines=[["ATT",tm.lfw],["MID",tm.lmf],["DEF",tm.ldf]].filter(x=>x[1]).map(x=>`<span><i>${x[0]}</i> ${rate(x[1])}</span>`).join("");
+        const best=(tm.best||[]).map(b=>`<span class="up-bp"><em>${b.pos}</em> ${b.name}${b.rating?` ${rate(b.rating)}`:""}</span>`).join("");
+        const takers=(tm.by||"").split(" + ").map(x=>x.trim()).filter(Boolean);
+        const taken=takers.length?`<div class="up-taken">${takers.map(n=>`<span class="up-taker"><span class="up-kit" style="background:${kitColor(n)}"></span>${n}</span>`).join("")}</div>`:"";
+        return `<div class="up-team${takers.length?" is-taken":""}"><div class="up-team-top"><span class="up-club">${tm.club}</span>${starRow(tm.stars)}</div>`
+          + `<div class="up-lines">${lines}${tm.avg?`<span class="up-avg"><i>AVG</i> ${rate(tm.avg)}</span>`:""}</div>`
+          + (best?`<div class="up-best">${best}</div>`:"") + taken + `</div>`;
       }).join("");
       return `<div class="up-tourn"><div class="up-head"><span class="tourn-cat cat-${t.catCode}">${catName(t.catCode)}</span><span class="up-name">${tr(t.name)}</span><span class="up-date">${t.date||"Date TBD"}</span></div><div class="up-grid">${cards}</div></div>`;
     }).join("");
