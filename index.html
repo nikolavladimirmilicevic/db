@@ -111,7 +111,7 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .name-inner{display:flex;align-items:center;gap:12px}
 .kit{width:4px;height:26px;border-radius:2px;flex:none}
 .nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:15px}
-.ttl-n{font-family:'Nunito',sans-serif;font-weight:900;color:var(--cyan-2)}
+.ttl-n{font-family:'Nunito',sans-serif;font-weight:900;color:#f5c518}
 .pts{font-family:'Nunito',sans-serif;font-weight:900;font-size:17px}
 .pts.p1{color:var(--cyan-2)}
 .form{display:flex;gap:4px;justify-content:center}
@@ -212,13 +212,12 @@ table.alltime{border-collapse:collapse;width:100%;min-width:620px;font-size:14px
 .alltime tbody td{padding:8px 6px;text-align:center;border-bottom:1px solid rgba(170,160,220,.11)}
 .alltime tbody tr:last-child td{border-bottom:none}
 .alltime td.pl{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;text-align:left;padding-left:20px;white-space:nowrap}
-.alltime td.tt{font-family:'Nunito',sans-serif;font-weight:900;color:var(--cyan-2);font-size:14px}
+.alltime td.tt{font-family:'Nunito',sans-serif;font-weight:900;color:#f5c518;font-size:14px}
 .cell{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:6px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800}
-.c1{background:var(--cyan-2);color:#04202c;font-weight:800}
-.c2{background:var(--purple);color:#fff;font-weight:800}
-.c3{background:rgba(0,184,232,.34);color:#eafcff}
-.cmid{background:rgba(170,160,220,.18);color:#cbc4ea}
-.clow{background:rgba(170,160,220,.07);color:rgba(202,196,232,.55)}
+.c1{background:#f5c518;color:#33260a;font-weight:800}
+.c2{background:#dfe3ef;color:#2b2f3d;font-weight:800}
+.c3{background:#d8a26a;color:#33210f;font-weight:800}
+.cx{background:rgba(170,160,220,.12);color:var(--muted)}
 .empty{background:transparent}
 .alltime-key{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-family:'Nunito',sans-serif;font-size:11px;color:var(--muted)}
 .alltime-key span{display:inline-flex;align-items:center;gap:7px}
@@ -314,8 +313,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .pl-1{color:#f5c518;background:rgba(245,197,24,.12)}
 .pl-2{color:#dfe3ef;background:rgba(223,227,239,.10)}
 .pl-3{color:#d8a26a;background:rgba(216,162,106,.12)}
-.pl-m{color:var(--muted);background:rgba(255,255,255,.04)}
-.pl-l{color:#8a83b4}
+.pl-x{color:var(--muted)}
 .records{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
 .rec-card{border:1px solid var(--line);border-radius:14px;padding:18px 20px;background:var(--surface);text-decoration:none;color:inherit;display:block;transition:transform .2s,border-color .2s}
 .rec-card:hover{transform:translateY(-3px);border-color:var(--cyan)}
@@ -456,13 +454,10 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .st-off{color:rgba(255,255,255,.16)}
 .st-on{position:absolute;left:0;top:0;overflow:hidden;color:#f5c518;text-shadow:0 0 6px rgba(245,197,24,.45)}
 .rt{font-weight:800;font-variant-numeric:tabular-nums}
-.rt.r-90{color:#ffd447}
-.rt.r-80{color:#43cdf3}
-.rt.r-70{color:#5fd08a}
-.rt.r-60{color:#e4e0f5}
-.rt.r-50{color:#a49dcf}
-.rt.r-40{color:#e8886a}
-.rt.r-30{color:#e0566a}
+.rt.r-90{color:#f5c518}
+.rt.r-80{color:#dfe3ef}
+.rt.r-70{color:#d8a26a}
+.rt.r-60,.rt.r-50,.rt.r-40,.rt.r-30{color:var(--muted)}
 .tr-club .up-stars{vertical-align:middle}
 .tr-club .st{width:11px;height:11px;font-size:11px;line-height:11px}
 .tr-best .tr-bp{display:inline-flex;align-items:baseline;gap:5px;margin-right:14px;white-space:nowrap}
@@ -622,11 +617,10 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
   </div>
   <div class="alltime-wrap"><table class="alltime" id="alltime-table"></table></div>
   <div class="alltime-key">
-    <span><i style="background:var(--cyan-2)"></i> Champion</span>
-    <span><i style="background:var(--purple)"></i> Runner-up</span>
-    <span><i style="background:rgba(0,184,232,.34)"></i> Podium</span>
-    <span><i style="background:rgba(170,160,220,.18)"></i> 4th to 6th</span>
-    <span><i style="background:rgba(170,160,220,.07)"></i> 7th+</span>
+    <span><i style="background:#f5c518"></i> Champion</span>
+    <span><i style="background:#dfe3ef"></i> Runner-up</span>
+    <span><i style="background:#d8a26a"></i> Third</span>
+    <span><i style="background:rgba(170,160,220,.12)"></i> Off the podium</span>
   </div>
   <button class="see-all" id="alltime-more" hidden></button>
   <div class="perf-head">Records <span>all-time superlatives</span></div>
@@ -1359,7 +1353,7 @@ function renderH2H(){
   });
   const rank = n => rows.findIndex(r=>r.name===n)+1;
   const titles = row => row.places.filter(p=>p===1).length;
-  const fin = p => p===1?"pl-1":p===2?"pl-2":p===3?"pl-3":(p<=6?"pl-m":"pl-l");
+  const fin = p => p===1?"pl-1":p===2?"pl-2":p===3?"pl-3":"pl-x";
   const team = (nick,cls) => `<div class="h2h-team">${IMG[nick]?`<img class="ph" src="${IMG[nick]}" alt="${nick}">`:""}<div class="nm2 ${cls}">${nick}</div><div class="sub">All-Time #${rank(nick)} \u00b7 ${titles(nick===a?rowA:rowB)} ${titles(nick===a?rowA:rowB)===1?'title':'titles'}</div></div>`;
   const table = shared.length ? `<div class="table-card" style="margin-top:6px"><table>
       <thead><tr><th class="name">Season</th><th>${a}</th><th>${b}</th><th>Ahead</th></tr></thead>
@@ -1460,7 +1454,7 @@ function renderAllTime(data){
     const titles = r.places.filter(p=>p===1).length;
     const cells = r.places.map(p=>{
       if(p==null) return `<td><span class="cell empty"></span></td>`;
-      const cls = p===1?'c1':p===2?'c2':p===3?'c3':p<=6?'cmid':'clow';
+      const cls = p===1?'c1':p===2?'c2':p===3?'c3':'cx';
       return `<td><span class="cell ${cls}">${p}</span></td>`;
     }).join("");
     return `<tr><td class="pl">${r.name}</td><td class="tt">${titles||''}</td>${cells}</tr>`;
@@ -2005,7 +1999,7 @@ function renderPlayer(nick){
   photo.onclick = IMG[nick] ? ()=>openLightbox(IMG[nick]) : null;
   const sq = (typeof SQUAD!=="undefined") ? SQUAD.find(p=>p.nick===nick) : null;
   document.getElementById("pp-role").textContent = sq ? sq.title : "";
-  const fin = p => p===1?"pl-1":p===2?"pl-2":p===3?"pl-3":(p<=6?"pl-m":"pl-l");
+  const fin = p => p===1?"pl-1":p===2?"pl-2":p===3?"pl-3":"pl-x";
   let titles=0, podiums=0, seasons=0, best=null; const rowsHtml=[];
   if(row){
     (VECNA.seasons||[]).forEach((yr,i)=>{
