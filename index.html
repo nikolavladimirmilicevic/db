@@ -259,7 +259,12 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .breakdown th.bd-fix,.breakdown th.bd-name{vertical-align:middle}
 .breakdown th.bd-name,.breakdown td.bd-name{text-align:left;padding-left:14px;font-weight:700}
 .breakdown td{text-align:center}
-.breakdown td.bd-total,.breakdown th.bd-total-h{color:var(--cyan-2);font-weight:800}
+.breakdown td.bd-total{color:var(--silver);font-weight:800}
+.breakdown th.bd-total-h{color:var(--cyan-2);font-weight:800}
+.breakdown td.bd-rank{font-weight:800;color:var(--muted)}
+.breakdown td.bd-rank.p1,.breakdown td.bd-total.p1{color:#f5c518}
+.breakdown td.bd-rank.p2,.breakdown td.bd-total.p2{color:#dfe3ef}
+.breakdown td.bd-rank.p3,.breakdown td.bd-total.p3{color:#d8a26a}
 .bd-it{font-style:italic;color:var(--muted)}
 .sheet-total td{font-weight:800;color:var(--white);background:rgba(0,184,232,.07);border-bottom:1px solid var(--line)}
 .bd-m0{background:rgba(0,184,232,.15)}.bd-m1{background:rgba(96,96,200,.17)}.bd-m2{background:rgba(0,184,232,.22)}.bd-m3{background:rgba(96,96,200,.11)}.bd-m4{background:rgba(0,184,232,.10)}.bd-m5{background:rgba(96,96,200,.19)}
@@ -1539,9 +1544,11 @@ function renderBreakdown(csvText, targetId, ctx={}){
   const itCol = {};
   for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++) itCol[k] = breakdownItalic(subRow[k], ctx.year, ctx.tournaments||[]); }
   const body=rows.slice(mIdx+2).filter(r=>r.some(x=>x)).map(r=>{
-    let cells=`<td class="bd-fix">${r[0]||""}</td><td class="bd-name">${r[1]||""}</td>`;
+    const rk=parseInt((r[0]||"").replace(/[^\d]/g,""),10);
+    const pcls=(rk>=1&&rk<=3)?" p"+rk:"";
+    let cells=`<td class="bd-fix bd-rank${pcls}">${r[0]||""}</td><td class="bd-name">${r[1]||""}</td>`;
     for(const g of groups){ for(let k=g.start;k<g.start+g.span;k++){ const it = itCol[k] && (r[k]||"")!==""; cells+=`<td class="${it?'bd-it':''}">${r[k]||""}</td>`; } }
-    cells+=`<td class="bd-total">${r[lastCol]||""}</td>`;
+    cells+=`<td class="bd-total${pcls}">${r[lastCol]||""}</td>`;
     return `<tr>${cells}</tr>`;
   }).join("");
   el.innerHTML=`<table class="raw breakdown"><thead><tr>${trMonth}</tr><tr>${trSub}</tr></thead><tbody>${body}</tbody></table>`;
