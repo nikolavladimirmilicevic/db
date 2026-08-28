@@ -453,6 +453,10 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .st-on{position:absolute;left:0;top:0;overflow:hidden;color:#f5c518;text-shadow:0 0 6px rgba(245,197,24,.45)}
 .rt{font-weight:800;font-variant-numeric:tabular-nums}
 .r-elite{color:#ffd447}.r-great{color:#43cdf3}.r-good{color:#5fd08a}.r-ok{color:#cfcbe9}.r-mid{color:#a49dcf}.r-low{color:#8a83b4}
+.tr-club .up-stars{vertical-align:middle}
+.tr-club .st{width:11px;height:11px;font-size:11px;line-height:11px}
+.tr-best .tr-bp{display:inline-flex;align-items:baseline;gap:5px;margin-right:14px;white-space:nowrap}
+.tr-best .tr-bp em{font-style:normal;color:var(--muted);font-size:9.5px;font-weight:800;letter-spacing:.05em}
 .up-team.is-taken{border-color:rgba(0,184,232,.34)}
 .up-taken{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(170,160,220,.1)}
 .up-taker{display:inline-flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;color:var(--white);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 7px}
@@ -1199,20 +1203,20 @@ function buildTOTS(TOURS, SCORERS, elId){
   el.innerHTML = xi.length ? (`<div class="tots-form">Formation ${formation}</div><div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`) : "";
 }
 function computeTOTS(){ buildTOTS(typeof CUR_TOURNAMENTS!=="undefined"?CUR_TOURNAMENTS:[], typeof SCORERS_LIST!=="undefined"?SCORERS_LIST:[], "tots-pitch"); }
+function ratNum(v){ const n=parseFloat(String(v||"").replace(",",".")); return isNaN(n)?null:n; }
+function rateCls(v){ const n=ratNum(v); if(n==null) return "";
+  if(n>=90) return "r-elite"; if(n>=85) return "r-great"; if(n>=80) return "r-good"; if(n>=75) return "r-ok"; if(n>=70) return "r-mid"; return "r-low"; }
+function rate(v){ return v?`<b class="rt ${rateCls(v)}">${v}</b>`:""; }
+function starRow(v){ const n=ratNum(v); if(n==null) return "";
+  let h=""; for(let i=1;i<=5;i++){ const f=Math.max(0,Math.min(1,n-(i-1)));
+    h+=`<span class="st"><span class="st-off">\u2605</span><span class="st-on" style="width:${f*100}%">\u2605</span></span>`; }
+  return `<span class="up-stars" title="${String(v)} stars">${h}</span>`; }
 function renderUpcoming(){
   const el=document.getElementById("upcoming"); if(!el) return;
   const list=(UPCOMING_TOURNAMENTS||[]).filter(t=>t.date && String(t.date).trim()).sort((a,b)=> tournKey(a.date)-tournKey(b.date) || a.idx-b.idx);
   if(!list.length){ el.innerHTML=""; return; }
   const catName=c=>({M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[c]||"");
-  const num=v=>{ const n=parseFloat(String(v||"").replace(",",".")); return isNaN(n)?null:n; };
-  const starRow=v=>{ const n=num(v); if(n==null) return "";
-    let h="";
-    for(let i=1;i<=5;i++){ const f=Math.max(0,Math.min(1,n-(i-1)));
-      h+=`<span class="st"><span class="st-off">\u2605</span><span class="st-on" style="width:${f*100}%">\u2605</span></span>`; }
-    return `<span class="up-stars" title="${String(v)} stars">${h}</span>`; };
-  const rateCls=v=>{ const n=num(v); if(n==null) return "";
-    if(n>=90) return "r-elite"; if(n>=85) return "r-great"; if(n>=80) return "r-good"; if(n>=75) return "r-ok"; if(n>=70) return "r-mid"; return "r-low"; };
-  const rate=v=> v?`<b class="rt ${rateCls(v)}">${v}</b>`:"";
+  const num=ratNum;
   el.innerHTML = `<div class="perf-head">Upcoming <span>teams available in the next tournaments, with every star and rating for your pick</span></div>`
     + list.map(t=>{
       const teams=(t.allTeams||[]).slice().sort((a,b)=>(num(b.avg)||0)-(num(a.avg)||0));
@@ -1465,9 +1469,9 @@ function renderTournaments(list, target="tourns", opts={}){
         <span class="tourn-date">${t.date}</span>
       </div>
       ${t.teams.map(tm=>{
-        const stars = tm.stars ? ` <span class="tr-stars">${tm.stars}★</span>` : "";
+        const stars = tm.stars ? ` ${starRow(tm.stars)}` : "";
         const best = (opts.detailed && tm.best && tm.best.length)
-          ? `<span class="tr-best">${tm.best.map(b=>`${b.pos} ${b.name}${b.rating?` ${b.rating}`:""}`).join("  ·  ")}</span>` : "";
+          ? `<span class="tr-best">${tm.best.map(b=>`<span class="tr-bp"><em>${b.pos}</em> ${b.name}${b.rating?` ${rate(b.rating)}`:""}</span>`).join("")}</span>` : "";
         return `<div class="tr">
           <span class="tr-place ${tm.place===1?'p1':''}">${tm.place==null?'-':tm.place}</span>
           <span class="tr-main"><span class="tr-club">${tm.club}${stars}</span><span class="tr-by">${tm.by}</span>${best}</span>
