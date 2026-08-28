@@ -1702,7 +1702,7 @@ function parse26tu(csvText){
     if(h>=rows.length || isLabel(rows[h])) { continue; }
     const hdr = rows[h];
     const tc = (...n)=>{ const w=n.map(normHeader); return hdr.findIndex(c=>w.includes(normHeader(c))); };
-    const ci = { tim:tc("Tim"), stars:tc("Zvezdice"), avg:tc("Prosek"),
+    const ci = { tim:(tc("Tim")>=0?tc("Tim"):0), stars:tc("Zvezdice"), avg:tc("Prosek"),
                  fw:tc("Najbolji FW"), mf:tc("Najbolji MF"), df:tc("Najbolji DF"), gk:tc("Najbolji GK"),
                  t1:tc("Takmičar 1","Takmicar 1","Takmičar"), t2:tc("Takmičar 2","Takmicar 2"),
                  place:tc("Mesto"), pts:tc("Bodovi") };

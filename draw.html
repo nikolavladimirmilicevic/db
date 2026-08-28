@@ -342,7 +342,7 @@ function parseTournaments(csvText){
     if(h>=rows.length || isLabel(rows[h])) continue;
     const hdr=rows[h];
     const tc=(...n)=>{ const w=n.map(normHeader); return hdr.findIndex(c=>w.includes(normHeader(c))); };
-    const timCol=tc("Tim"), placeCol=tc("Mesto");
+    const timCol=(tc("Tim")>=0?tc("Tim"):0), placeCol=tc("Mesto");
     let j=h+1, anyPlace=false, anyTeam=false;
     for(; j<rows.length; j++){
       const tr=rows[j]||[]; if(isLabel(tr)) break;
