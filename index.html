@@ -312,6 +312,11 @@ table.raw tbody tr:hover td{background:rgba(0,184,232,.04)}
 .h2h-duels.collapsed>.duel:nth-child(n+6){display:none}
 a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .nm-link{color:inherit;text-decoration:none}
+.inline-link{color:inherit;text-decoration:none;border-bottom:1px dotted rgba(170,160,220,.35)}
+.inline-link:hover{color:var(--cyan-2);border-bottom-color:var(--cyan-2)}
+.alltime th .inline-link,.alltime td .inline-link{border-bottom:none}
+.alltime th .inline-link:hover,.alltime td .inline-link:hover{color:var(--cyan-2)}
+svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 .nm-link:hover .nm{color:var(--cyan-2)}
 .pp-top{display:flex;align-items:stretch;gap:22px;flex-wrap:wrap}
 .pp-photo{align-self:flex-start}
@@ -1038,6 +1043,8 @@ const SQUAD = [
 let CURRENT_PTS = {};
 let KIT_COLOR = {};
 let LAST_STANDINGS = null;
+const KNOWN_NICKS = new Set();
+function learnNicks(names){ (names||[]).forEach(n=>{ const k=(n||'').trim(); if(k) KNOWN_NICKS.add(k); }); }
 let CUR_TOURNAMENTS = [];
 let UPCOMING_TOURNAMENTS = [];
 let RACE = null;
@@ -1165,6 +1172,7 @@ function setupCollapse(el, count, btn, limit){
 const SB_STAR = '<svg class="sb-star" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.95 6.36 6.99.72-5.2 4.71 1.43 6.86L12 17.98 5.83 21.6l1.43-6.86-5.2-4.71 6.99-.72L12 2z"/></svg>';
 function renderStandings(rows, target="standings"){
   if(target==="standings") LAST_STANDINGS = rows;
+  learnNicks(rows.map(r=>r.nick));
   document.getElementById(target).innerHTML = rows.map(r=>{
     const form = r.form.map(p=>{
       const cls = p===1?'f-1':p===2?'f-2':p===3?'f-3':'f-x';
@@ -1205,7 +1213,7 @@ function renderScorers(list, target="scorers", opts={}){
       <td class="pos ${i<3?'p'+(i+1):''}">${rankMark(i+1)}</td>
       ${d?`<td class="perf-date-c hide">${s.date||""}</td>`:""}
       <td class="perf-name"><span class="pn">${s.player}</span><span class="pc">${s.club}</span></td>
-      <td class="perf-by hide">${s.by}</td>
+      <td class="perf-by hide">${plinkList(s.by)}</td>
       <td class="hide">${s.g}</td>
       <td class="hide">${s.a}</td>
       <td class="pts ${i<3?'p'+(i+1):''}">${s.tot}</td>
@@ -1238,6 +1246,14 @@ function hslToRgb(h,s,l){
   return `rgb(${Math.round(r*255)},${Math.round(g*255)},${Math.round(b*255)})`;
 }
 function plCls(p){ return (p>=1&&p<=3)?("pm-"+p):"pm-x"; }
+function isCompetitor(n){ const k=(n||"").trim(); if(!k) return false;
+  if((typeof KNOWN_NICKS!=="undefined") && KNOWN_NICKS.size) return KNOWN_NICKS.has(k);
+  return false; }
+function plink(nick, cls){ const n=(nick||"").trim(); if(!n) return "";
+  return isCompetitor(n) ? `<a href="#player-${encodeURIComponent(n)}" class="${cls||"nm-link inline-link"}">${n}</a>` : n; }
+function plinkList(by, cls){ return (by||"").split(" + ").map(x=>x.trim()).filter(Boolean).map(n=>plink(n,cls)).join(" + "); }
+function slink(yr, label){ const y=parseInt(yr,10); const txt=label==null?yr:label;
+  return (SEASON_GIDS[y]||LEGACY_GID[y]) ? `<a href="#season-${y}" class="nm-link inline-link">${txt}</a>` : `${txt}`; }
 function rankMark(p){ const n=parseInt(p,10); return (n>=1&&n<=3)?`<span class="rk rk-${n}">${n}</span>`:`${p==null?"":p}`; }
 function hueDist(a,b){ const d=Math.abs(a-b)%360; return Math.min(d,360-d); }
 function nearestFreeHue(base, used, gap){
@@ -1357,7 +1373,7 @@ function renderUpcoming(){
         const lines=[["ATT",tm.lfw],["MID",tm.lmf],["DEF",tm.ldf]].filter(x=>x[1]).map(x=>`<span><i>${x[0]}</i> ${rate(x[1])}</span>`).join("");
         const best=(tm.best||[]).map(b=>`<span class="up-bp"><em>${b.pos}</em> ${b.name}${b.rating?` ${rate(b.rating)}`:""}</span>`).join("");
         const takers=(tm.by||"").split(" + ").map(x=>x.trim()).filter(Boolean);
-        const taken=takers.length?`<div class="up-taken">${takers.map(n=>`<span class="up-taker"><span class="up-kit" style="background:${kitColor(n)}"></span>${n}</span>`).join("")}</div>`:"";
+        const taken=takers.length?`<div class="up-taken">${takers.map(n=>`<a class="up-taker nm-link" href="#player-${encodeURIComponent(n)}"><span class="up-kit" style="background:${kitColor(n)}"></span>${n}</a>`).join("")}</div>`:"";
         return `<div class="up-team${takers.length?" is-taken":""}"><div class="up-team-top"><span class="up-club">${tm.club}</span>${starRow(tm.stars)}</div>`
           + `<div class="up-lines">${lines}${tm.avg?`<span class="up-avg"><i>AVG</i> ${rate(tm.avg)}</span>`:""}</div>`
           + (best?`<div class="up-best">${best}</div>`:"") + taken + `</div>`;
@@ -1372,7 +1388,7 @@ function renderLatest(){
   const catName={M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[t.catCode]||t.cat||""; const catCls="cat-"+(t.catCode||"x");
   const podium=[...t.teams].filter(x=>x.place!=null).sort((a,b)=>a.place-b.place).slice(0,3);
   const medal=p=>p===1?"lp-1":p===2?"lp-2":p===3?"lp-3":"lp-x";
-  const rows=podium.map(x=>`<div class="lp ${medal(x.place)}"><span class="lp-pos">${x.place}</span><span class="lp-club">${x.club||""}</span><span class="lp-by">${x.by||""}</span></div>`).join("");
+  const rows=podium.map(x=>`<div class="lp ${medal(x.place)}"><span class="lp-pos">${x.place}</span><span class="lp-club">${x.club||""}</span><span class="lp-by">${plinkList(x.by)}</span></div>`).join("");
   el.innerHTML=`<div class="latest-card">
     <div class="latest-head">
       <span class="latest-lab">Latest result</span>
@@ -1431,7 +1447,7 @@ function renderRace(){
   // rank end labels to reduce overlap
   const ends=players.map(p=>({p, v:series[p][series[p].length-1]})).sort((a,b)=>b.v-a.v);
   let lastY=-99; const endLbl=ends.map(e=>{ let yy=Y(e.v); if(yy-lastY<14) yy=lastY+14; lastY=yy;
-    return `<text x="${X(N)+9}" y="${yy+4}" class="race-lbl" fill="${kitColor(e.p)}">${e.p}</text>`; }).join("");
+    return `<a href="#player-${encodeURIComponent(e.p)}"><text x="${X(N)+9}" y="${yy+4}" class="race-lbl" fill="${kitColor(e.p)}">${e.p}</text></a>`; }).join("");
   const lines=players.map(p=>`<polyline points="${series[p].map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="none" stroke="${kitColor(p)}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`).join("");
   const dots=players.map(p=> series[p].map((v,i)=> (i===0||!part[p][i])?"":`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.7" fill="${kitColor(p)}"/>`).join("")).join("");
   const sp=(W-L-R)/Math.max(1,N);
@@ -1483,7 +1499,7 @@ function renderH2H(){
   const rank = n => rows.findIndex(r=>r.name===n)+1;
   const titles = row => row.places.filter(p=>p===1).length;
   const fin = p => p===1?"pl-1":p===2?"pl-2":p===3?"pl-3":"pl-x";
-  const team = (nick,cls) => `<div class="h2h-team">${IMG[nick]?`<img class="ph" src="${IMG[nick]}" alt="${nick}">`:""}<div class="nm2 ${cls}">${nick}</div><div class="sub">All-Time #${rank(nick)} \u00b7 ${titles(nick===a?rowA:rowB)} ${titles(nick===a?rowA:rowB)===1?'title':'titles'}</div></div>`;
+  const team = (nick,cls) => `<div class="h2h-team">${IMG[nick]?`<img class="ph" src="${IMG[nick]}" alt="${nick}">`:""}<div class="nm2 ${cls}">${plink(nick)}</div><div class="sub">All-Time #${rank(nick)} \u00b7 ${titles(nick===a?rowA:rowB)} ${titles(nick===a?rowA:rowB)===1?'title':'titles'}</div></div>`;
   const table = shared.length ? `<div class="table-card" style="margin-top:6px"><table>
       <thead><tr><th class="name">Season</th><th>${a}</th><th>${b}</th><th>Ahead</th></tr></thead>
       <tbody class="h2h-tbody">${shared.map(r=>`<tr>
@@ -1557,6 +1573,8 @@ function renderRecords(){
     card("Current Leader", leader, v=>(v!=null?nf(v):"-")+" pts", IC.leader)
   ].join("");
 }
+function potsHtml(txt){ const m=String(txt||"").match(/^(.*)\s\((.+)\)$/);
+  return m ? `${m[1]} (${plinkList(m[2])})` : txt; }
 function renderHonours(){
   const lastCompleted = Math.max(...HONOURS.filter(x=>!x.current).map(x=>x.yr));
   const TROPHY = '<svg class="trophy" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>';
@@ -1572,13 +1590,14 @@ function renderHonours(){
     <${tag} class="year ${h.current?'live':''} ${on?'clickable':''}"${href}>
       ${icon}
       <div class="yr">${h.yr}</div>
-      <div class="row"><div class="k">${champLabel}</div><div class="v">${h.champ}</div></div>
-      ${(h.pots && h.pots!=="?") ? `<div class="row"><div class="k">${potsLabel}</div><div class="v">${h.pots}</div></div>` : ""}
+      <div class="row"><div class="k">${champLabel}</div><div class="v">${plink(h.champ)}</div></div>
+      ${(h.pots && h.pots!=="?") ? `<div class="row"><div class="k">${potsLabel}</div><div class="v">${potsHtml(h.pots)}</div></div>` : ""}
     </${tag}>`;
   }).join("");
 }
 function renderAllTime(data){
-  const head = `<tr><th class="pl">Player</th><th>TTL</th>${data.seasons.map(y=>`<th>${y}</th>`).join("")}</tr>`;
+  learnNicks((data.rows||[]).map(r=>r.name));
+  const head = `<tr><th class="pl">Player</th><th>TTL</th>${data.seasons.map(y=>`<th>${slink(y)}</th>`).join("")}</tr>`;
   const body = data.rows.map(r=>{
     const titles = r.places.filter(p=>p===1).length;
     const cells = r.places.map(p=>{
@@ -1586,7 +1605,7 @@ function renderAllTime(data){
       const cls = p===1?'c1':p===2?'c2':p===3?'c3':'cx';
       return `<td><span class="cell ${cls}">${p}</span></td>`;
     }).join("");
-    return `<tr><td class="pl">${r.name}</td><td class="tt">${titles||''}</td>${cells}</tr>`;
+    return `<tr><td class="pl">${plink(r.name)}</td><td class="tt">${titles||''}</td>${cells}</tr>`;
   }).join("");
   document.getElementById("alltime-table").innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
   setupCollapse(document.getElementById("alltime-table"), (data.rows||[]).length, document.getElementById("alltime-more"));
@@ -1607,7 +1626,7 @@ function renderTournaments(list, target="tourns", opts={}){
           ? `<span class="tr-best">${tm.best.map(b=>`<span class="tr-bp"><em>${b.pos}</em> ${b.name}${b.rating?` ${rate(b.rating)}`:""}</span>`).join("")}</span>` : "";
         return `<div class="tr">
           <span class="tr-place ${(tm.place>=1&&tm.place<=3)?'p'+tm.place:''}">${tm.place==null?'-':rankMark(tm.place)}</span>
-          <span class="tr-main"><span class="tr-club">${tm.club}${stars}</span><span class="tr-by">${tm.by}</span>${best}</span>
+          <span class="tr-main"><span class="tr-club">${tm.club}${stars}</span><span class="tr-by">${plinkList(tm.by)}</span>${best}</span>
           <span class="tr-pts ${tm.points?'':'zero'}">${tm.points?tm.points.toLocaleString('en-US'):'-'}</span>
         </div>`;
       }).join("")}
