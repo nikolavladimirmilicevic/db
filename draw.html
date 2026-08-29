@@ -19,12 +19,13 @@
 <script>
 // start the data requests before anything else renders
 var DRAW_PUB_ID="2PACX-1vRcuN1Z2cgPC9e4sx3j-8eR1wu0_SCIkJMXT8ysHhK2p3moGSD5tpYIuX6rZRgleylELTmRryB6pIsI";
-function drawCsvUrl(gid){ return "https://docs.google.com/spreadsheets/d/e/"+DRAW_PUB_ID+"/pub?gid="+gid+"&single=true&output=csv"; }
+var REFRESH_TOKEN=(new URLSearchParams(location.search)).get("r")||"";
+function drawCsvUrl(gid){ return "https://docs.google.com/spreadsheets/d/e/"+DRAW_PUB_ID+"/pub?gid="+gid+"&single=true&output=csv"+(REFRESH_TOKEN?("&_="+encodeURIComponent(REFRESH_TOKEN)):""); }
 var DRAW_GID_TABLE="1388852135", DRAW_GID_TOURN="2032154872";
 function grab(gid){ return fetch(drawCsvUrl(gid),{mode:"cors"}).then(function(r){ if(!r.ok) throw 0; return r.text(); }); }
 var P_TABLE=grab(DRAW_GID_TABLE), P_TOURN=grab(DRAW_GID_TOURN);
 P_TABLE.catch(function(){}); P_TOURN.catch(function(){});
-function cacheGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function cacheGet(k){ if(REFRESH_TOKEN) return null; try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function cacheSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
 </script>
 <style>
@@ -43,7 +44,12 @@ nav{display:flex;gap:26px;font-size:13px;font-weight:500;color:var(--muted);lett
 nav a{color:var(--muted);text-decoration:none;transition:color .2s}
 nav a:hover{color:var(--cyan-2)}
 nav a.active{color:var(--cyan-2)}
+.top .wrap>nav{margin-left:auto}
 .menu-toggle{display:none;background:none;border:none;color:var(--silver);font-size:22px;cursor:pointer;padding:6px;line-height:1}
+.refresh-btn{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:6px 8px;line-height:1;transition:color .2s;margin-left:14px}
+.refresh-btn:hover{color:var(--cyan-2)}
+.refresh-btn.spinning{color:var(--cyan-2);animation:spin-r .7s linear infinite}
+@keyframes spin-r{to{transform:rotate(360deg)}}
 section.wrap{padding-top:26px;padding-bottom:34px}
 a.back-link{display:inline-block;font-family:'Nunito',sans-serif;font-size:13px;color:var(--muted);margin-bottom:18px;text-decoration:none;transition:color .2s}
 a.back-link:hover{color:var(--cyan-2)}
@@ -184,6 +190,7 @@ h2{font-family:'Fredoka',sans-serif;font-weight:600;text-transform:uppercase;fon
     <a href="index.html#gallery">Gallery</a>
     <a class="active" href="draw.html">Draw</a>
   </nav>
+  <button class="refresh-btn" aria-label="Refresh data" title="Refresh data" onclick="hardRefresh(this)">↻</button>
   <button class="menu-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleMenu(this)">☰</button>
 </div></header>
 <section class="wrap reveal">
@@ -245,6 +252,12 @@ h2{font-family:'Fredoka',sans-serif;font-weight:600;text-transform:uppercase;fon
   </div>
 </footer>
 <script>
+function hardRefresh(btn){
+  if(btn) btn.classList.add("spinning");
+  try{ localStorage.removeItem("db_draw_table"); localStorage.removeItem("db_draw_tourn"); }catch(e){}
+  try{ if("caches" in window){ caches.keys().then(ks=>ks.forEach(k=>caches.delete(k))); } }catch(e){}
+  setTimeout(()=>location.replace(location.pathname+"?r="+Date.now()), 120);
+}
 function toggleMenu(btn){ const n=document.querySelector(".top nav"); const o=n.classList.toggle("open"); if(btn) btn.setAttribute("aria-expanded", o?"true":"false"); }
 document.querySelectorAll(".top nav a").forEach(a=>a.addEventListener("click",()=>{ const n=document.querySelector(".top nav"); n.classList.remove("open"); const b=document.querySelector(".menu-toggle"); if(b) b.setAttribute("aria-expanded","false"); }));
 (function(){ const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add("in"); }),{threshold:.08});
