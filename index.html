@@ -116,6 +116,9 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .rk-2{background:#dfe3ef;color:#2b2f3d}
 .rk-3{background:#d8a26a;color:#33210f}
 .dr .rk{width:21px;height:21px;font-size:11.5px;vertical-align:middle}
+.club-fins .rk{width:20px;height:20px;font-size:11px;vertical-align:middle}
+.sp-card .val .rk{width:30px;height:30px;font-size:15px}
+.squad-stats .rk{width:24px;height:24px;font-size:12.5px}
 .pos.p1,.pts.p1{color:#f5c518}
 .pos.p2,.pts.p2{color:#dfe3ef}
 .pos.p3,.pts.p3{color:#d8a26a}
@@ -1281,7 +1284,7 @@ function renderSquad(){
         <div class="squad-stats">
           ${cell(st.seasons, "Seasons")}
           ${cell(st.titles, "Titles")}
-          ${cell(st.overall!=null ? ordinal(st.overall) : "-", "All Time")}
+          ${cell(st.overall>=1&&st.overall<=3 ? `<span class="rk rk-${st.overall}">${st.overall}</span>` : (st.overall!=null ? ordinal(st.overall) : "-"), "All Time")}
           ${cell(st.pts!=null ? nf(st.pts) : "-", "Current Pts")}
         </div>
       </div>
@@ -2141,9 +2144,9 @@ function renderPlayer(nick){
   const cur = (LAST_STANDINGS||[]).find(r=>r.nick===nick);
   const inCur = CURRENT_PTS[nick]!=null;
   const card=(lab,val)=>`<div class="sp-card"><div class="lab">${lab}</div><div class="val">${val}</div></div>`;
-  let stats = card("Seasons", seasons) + card("Titles", titles) + card("Podiums", podiums) + card("Best finish", best!=null?ordinal(best):"-");
+  let stats = card("Seasons", seasons) + card("Titles", titles) + card("Podiums", podiums) + card("Best finish", (best>=1&&best<=3)?`<span class="rk rk-${best}">${best}</span>`:(best!=null?ordinal(best):"-"));
   if(inCur) stats += card("Current Pts", cur?nf(cur.pts):"-");
-  if(cur && cur.form && cur.form.length) stats += card("Form", cur.form.map(p=>`<span class="${fin(p)}">${p}</span>`).join(" "));
+  if(cur && cur.form && cur.form.length) stats += card("Form", `<span class="form">${cur.form.map(p=>`<span class="${p===1?"f-1":p===2?"f-2":p===3?"f-3":"f-x"}">${p}</span>`).join("")}</span>`);
   document.getElementById("pp-stats").innerHTML = stats;
   const T='<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4h12v3a5 5 0 0 1-4 4.9V15h2v2h-8v-2h2v-3.1A5 5 0 0 1 6 7V4Z"/></svg>';
   document.getElementById("pp-trophies").innerHTML = titles>0 ? T.repeat(titles) : `<span class="none">No league titles yet.</span>`;
@@ -2201,7 +2204,7 @@ function renderPlayer(nick){
   const clubOrd=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
   if(clubArr.length) seasonHtml += `<div class="perf-head">Clubs this season <span>points won, finishes and appearances</span></div>`
     + `<div class="table-card"><table><thead><tr><th class="name">Club</th><th>Pts</th><th>Used</th><th class="club-fins-h">Finishes</th></tr></thead><tbody>`
-    + clubArr.map(c=>{ const fins=c.g.map((n,i)=> n?`${n}\u00d7${clubOrd[i]}`:"").filter(Boolean).join(" \u00b7 ")||"\u2014";
+    + clubArr.map(c=>{ const fins=c.g.map((n,i)=> n?(i<3?`${n}\u00d7<span class="rk rk-${i+1}">${i+1}</span>`:`${n}\u00d7${clubOrd[i]}`):"").filter(Boolean).join(" \u00b7 ")||"\u2014";
         return `<tr><td class="name-cell"><span class="nm">${c.c}</span></td><td class="pts">${nf(c.pts)}</td><td>${c.n}</td><td class="club-fins">${fins}</td></tr>`; }).join("")
     + `</tbody></table></div>`;
   document.getElementById("pp-season").innerHTML = seasonHtml;
