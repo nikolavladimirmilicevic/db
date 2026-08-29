@@ -422,6 +422,7 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
 .lp-1{border-color:rgba(245,197,24,.35);background:rgba(245,197,24,.06)}
 .lp-2{border-color:rgba(223,227,239,.28)}
 .lp-3{border-color:rgba(216,162,106,.3)}
+.lp-x .lp-pos{background:rgba(164,157,207,.18);color:var(--silver)}
 .lp-club{font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lp-by{font-family:'Nunito',sans-serif;font-size:12px;color:var(--muted);margin-left:auto;white-space:nowrap}
 .club-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
@@ -1202,7 +1203,7 @@ function renderLatest(){
   const t=list[0]; if(!t){ el.innerHTML=""; return; }
   const catName={M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[t.catCode]||t.cat||""; const catCls="cat-"+(t.catCode||"x");
   const podium=[...t.teams].filter(x=>x.place!=null).sort((a,b)=>a.place-b.place).slice(0,3);
-  const medal=p=>p===1?"lp-1":p===2?"lp-2":"lp-3";
+  const medal=p=>p===1?"lp-1":p===2?"lp-2":p===3?"lp-3":"lp-x";
   const rows=podium.map(x=>`<div class="lp ${medal(x.place)}"><span class="lp-pos">${x.place}</span><span class="lp-club">${x.club||""}</span><span class="lp-by">${x.by||""}</span></div>`).join("");
   el.innerHTML=`<div class="latest-card">
     <div class="latest-head">
