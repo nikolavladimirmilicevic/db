@@ -119,6 +119,7 @@ tbody tr:hover{background:rgba(0,184,232,.05)}
 .club-fins .rk{width:20px;height:20px;font-size:11px;vertical-align:middle}
 .sp-card .val .rk{width:30px;height:30px;font-size:15px}
 .squad-stats .rk{width:24px;height:24px;font-size:12.5px}
+.h2h-compare .rk{width:24px;height:24px;font-size:12.5px}
 .pos.p1,.pts.p1{color:#f5c518}
 .pos.p2,.pts.p2{color:#dfe3ef}
 .pos.p3,.pts.p3{color:#d8a26a}
@@ -1487,8 +1488,8 @@ function renderH2H(){
       <thead><tr><th class="name">Season</th><th>${a}</th><th>${b}</th><th>Ahead</th></tr></thead>
       <tbody class="h2h-tbody">${shared.map(r=>`<tr>
         <td class="name-cell"><span class="nm">${(SEASON_GIDS[r.yr]||LEGACY_GID[r.yr])?`<a href="#season-${r.yr}" class="nm-link">${r.yr}</a>`:r.yr}</span></td>
-        <td><span class="pp-career-fin ${fin(r.pa)}">${ordinal(r.pa)}</span></td>
-        <td><span class="pp-career-fin ${fin(r.pb)}">${ordinal(r.pb)}</span></td>
+        <td>${(r.pa>=1&&r.pa<=3)?`<span class="rk rk-${r.pa}">${r.pa}</span>`:`<span class="pp-career-fin ${fin(r.pa)}">${ordinal(r.pa)}</span>`}</td>
+        <td>${(r.pb>=1&&r.pb<=3)?`<span class="rk rk-${r.pb}">${r.pb}</span>`:`<span class="pp-career-fin ${fin(r.pb)}">${ordinal(r.pb)}</span>`}</td>
         <td><span class="pp-career-fin ${r.win===a?'fin-1':'fin-2'}">${r.win}</span></td></tr>`).join("")}</tbody>
     </table></div>
     <button class="see-all" id="h2h-season-more" hidden></button>` : `<div class="h2h-note">These two never played the same season.</div>`;
@@ -1501,7 +1502,7 @@ function renderH2H(){
   const cmp=(label,va,vb,aw2,bw2,fmt)=>`<div class="cmp"><span class="v va ${aw2?'win':''}">${va==null?'-':fmt(va)}</span><span class="k">${label}</span><span class="v vb ${bw2?'win':''}">${vb==null?'-':fmt(vb)}</span></div>`;
   const compare = shared.length ? `<div class="h2h-compare">
     ${cmp("Avg finish", avgA, avgB, avgA!=null&&avgB!=null&&avgA<avgB, avgA!=null&&avgB!=null&&avgB<avgA, v=>v.toFixed(1))}
-    ${cmp("Best finish", bestA, bestB, bestA!=null&&bestB!=null&&bestA<bestB, bestA!=null&&bestB!=null&&bestB<bestA, v=>ordinal(v))}
+    ${cmp("Best finish", bestA, bestB, bestA!=null&&bestB!=null&&bestA<bestB, bestA!=null&&bestB!=null&&bestB<bestA, v=>(v>=1&&v<=3)?`<span class="rk rk-${v}">${v}</span>`:ordinal(v))}
     ${cmp("Titles", titA, titB, titA>titB, titB>titA, v=>v)}
   </div>` : "";
   // current-season tournament duels
