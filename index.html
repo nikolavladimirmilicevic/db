@@ -52,10 +52,13 @@ a{color:inherit;text-decoration:none}
 nav{display:flex;align-items:center;gap:26px;font-size:13px;font-weight:500;color:var(--muted);letter-spacing:.02em}
 .top .wrap>nav{margin-left:auto}
 nav a{transition:color .2s}
-.menu-toggle{display:none;align-items:center;justify-content:center;background:none;border:none;color:var(--silver);font-size:22px;line-height:1;height:32px;width:32px;padding:0;cursor:pointer}
-.refresh-btn{display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);font-size:20px;line-height:1;height:32px;width:32px;padding:0;cursor:pointer;transition:color .2s;margin-left:14px}
+.menu-toggle{display:none;align-items:center;justify-content:center;background:none;border:none;color:var(--silver);height:32px;width:32px;padding:0;cursor:pointer}
+.menu-toggle svg{display:block}
+.refresh-btn{display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--muted);height:32px;width:32px;padding:0;cursor:pointer;transition:color .2s;margin-left:14px}
+.refresh-btn svg{display:block}
 .refresh-btn:hover{color:var(--cyan-2)}
-.refresh-btn.spinning{color:var(--cyan-2);animation:spin-r .7s linear infinite}
+.refresh-btn.spinning{color:var(--cyan-2)}
+.refresh-btn.spinning svg{animation:spin-r .7s linear infinite}
 @keyframes spin-r{to{transform:rotate(360deg)}}
 nav a:hover{color:var(--cyan-2)}
 
@@ -628,8 +631,8 @@ a.card{text-decoration:none;color:inherit;display:block;cursor:pointer}
       <a href="#gallery">Gallery</a>
       <a href="#draw">Draw</a>
     </nav>
-    <button class="menu-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleMenu(this)">☰</button>
-    <button class="refresh-btn" id="refresh-btn" aria-label="Refresh data" title="Refresh data" onclick="hardRefresh(this)">↻</button>
+    <button class="menu-toggle" aria-label="Menu" aria-expanded="false" onclick="toggleMenu(this)"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button class="refresh-btn" id="refresh-btn" aria-label="Refresh data" title="Refresh data" onclick="hardRefresh(this)"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><polyline points="20 5 20 11 14 11"/></svg></button>
   </div>
 </header>
 
