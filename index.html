@@ -1636,7 +1636,7 @@ function breakdownItalic(code, year, tournaments){
   const tM = t => parseInt((t.date||"").split(".")[1],10);
   const tY = t => parseInt((t.date||"").split(".")[2],10);
   if(cat==="Y"){
-    if(now >= new Date(year, 8, 1)) return false;            // moved into next season
+    if(now >= new Date(year, 9, 1)) return false;            // September has passed without it being played
     if(tournaments.some(t=>t.catCode==="Y")) return false;   // annual played this season
     return true;
   }
