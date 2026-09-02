@@ -1354,7 +1354,7 @@ function renderSquad(){
     const st = p._s;
     return `<a class="card" href="#player-${encodeURIComponent(p.nick)}">
       <span class="spine" style="background:${kitColor(p.nick)}"></span>
-      ${IMG[p.nick] ? `<div class="card-photo"><img src="${IMG[p.nick]}" alt="${p.nick}" loading="lazy"></div>` : ""}
+      ${IMG[p.nick] ? `<div class="card-photo"><img src="${IMG[p.nick]}" alt="${p.nick}" loading="lazy" onerror="this.closest('.card-photo').remove()"></div>` : ""}
       <div class="card-body">
         <div class="who"><div class="nick">${p.nick}</div><div class="title">${p.title}</div></div>
         <div class="squad-stats">
@@ -2207,7 +2207,7 @@ function renderPlayer(nick){
   document.getElementById("pp-eyebrow").textContent = idx>=0 ? ("All-Time #"+(idx+1)) : "Competitor";
   const photo = document.getElementById("pp-photo");
   photo.style.display = IMG[nick] ? "" : "none";
-  photo.innerHTML = IMG[nick] ? `<img src="${IMG[nick]}" alt="${nick}">` : "";
+  photo.innerHTML = IMG[nick] ? `<img src="${IMG[nick]}" alt="${nick}" onerror="const p=this.closest('.pp-photo'); if(p){p.style.display='none';}">` : "";
   photo.onclick = IMG[nick] ? ()=>openLightbox(IMG[nick]) : null;
   const sq = (typeof SQUAD!=="undefined") ? SQUAD.find(p=>p.nick===nick) : null;
   document.getElementById("pp-role").textContent = sq ? sq.title : "";
