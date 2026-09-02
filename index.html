@@ -1263,27 +1263,88 @@ function nearestFreeHue(base, used, gap){
   }
   return base;
 }
-/* kit colours: active competitors take blue, red, yellow, green in all-time order */
-const KIT_ORDER = ["#2f66d6", "#f23e50", "#f5c518", "#3fbf6a"];
+/* kit colours: 1st blue, 2nd red, 3rd yellow, 4th green by current standing,
+   each tuned to the shade of that colour found in the competitor's photo */
+/* hue, minimum saturation, lightness band: keeps each colour recognisable */
+const KIT_HUES = [
+  {h:220, s:0.55, lo:0.46, hi:0.58},   // 1st  blue
+  {h:355, s:0.68, lo:0.45, hi:0.56},   // 2nd  red
+  {h: 48, s:0.82, lo:0.50, hi:0.58},   // 3rd  yellow
+  {h:145, s:0.55, lo:0.44, hi:0.56}    // 4th  green
+];
+const KIT_BASE = ["#2f66d6", "#f23e50", "#f5c518", "#3fbf6a"];
 const KIT_SPARE = "#8686de";
 function activeNicks(){
   if(LAST_STANDINGS && LAST_STANDINGS.length) return LAST_STANDINGS.map(r=>r.nick);
   return (SAMPLE_STANDINGS||[]).map(r=>r.nick);
 }
-function computeKitColors(){
-  const active=activeNicks();
-  if(!active.length) return;
-  const na=n=>String(n||"").trim().toLowerCase();
-  const activeSet=new Set(active.map(na));
-  const ranked=((VECNA&&VECNA.rows)||[]).map(r=>r.name).filter(n=>activeSet.has(na(n)));
-  ranked.forEach(n=>{ if(!active.some(a=>na(a)===na(n))) return; });
-  const ordered=ranked.slice();
-  active.forEach(n=>{ if(!ordered.some(x=>na(x)===na(n))) ordered.push(n); });
-  KIT_COLOR={};
-  ordered.forEach((n,i)=>{ KIT_COLOR[n]= i<KIT_ORDER.length ? KIT_ORDER[i] : KIT_SPARE; });
+function rgbToHsl(r,g,b){
+  r/=255; g/=255; b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b); let h=0, s=0; const l=(mx+mn)/2;
+  if(mx!==mn){
+    const d=mx-mn; s = l>0.5 ? d/(2-mx-mn) : d/(mx+mn);
+    if(mx===r) h=(g-b)/d+(g<b?6:0); else if(mx===g) h=(b-r)/d+2; else h=(r-g)/d+4;
+    h/=6;
+  }
+  return {h:h*360, s, l};
+}
+function hueDrift(a,b){ return (a-b+540)%360-180; }
+/* pick the shade of the assigned colour that best matches the photo */
+function shadeFromPhoto(src, cfg){
+  return new Promise(resolve=>{
+    const img = new Image();
+    img.onerror = ()=>resolve(null);
+    img.onload = ()=>{
+      try{
+        const N=56, c=document.createElement("canvas");
+        c.width=c.height=N;
+        const ctx=c.getContext("2d", {willReadFrequently:true});
+        ctx.drawImage(img,0,0,N,N);
+        const px=ctx.getImageData(0,0,N,N).data;
+        let x=0, y=0, sSum=0, lSum=0, n=0, total=0;
+        for(let i=0;i<px.length;i+=4){
+          const {h,s,l}=rgbToHsl(px[i],px[i+1],px[i+2]);
+          if(s<0.18 || l<0.12 || l>0.92) continue;      // skip greys, shadows, highlights
+          total++;
+          if(hueDist(h,cfg.h) > 42) continue;           // keep only this colour family
+          const w=s;                                    // vivid pixels count for more
+          const rad=h*Math.PI/180;
+          x+=Math.cos(rad)*w; y+=Math.sin(rad)*w; sSum+=s*w; lSum+=l*w; n+=w;
+        }
+        if(!n || n < Math.max(6, total*0.015)) return resolve(null);
+        let found=Math.atan2(y/n, x/n)*180/Math.PI; if(found<0) found+=360;
+        const drift=Math.max(-10, Math.min(10, hueDrift(found, cfg.h)));   // stay in the family
+        const hh=(cfg.h+drift+360)%360;
+        const ss=Math.min(0.95, Math.max(cfg.s, sSum/n));
+        const ll=Math.min(cfg.hi, Math.max(cfg.lo, lSum/n));
+        resolve(hslToRgb(hh, ss, ll));
+      }catch(e){ resolve(null); }
+    };
+    img.src=src;
+  });
+}
+function paintKits(){
   renderSquad();
   if(LAST_STANDINGS) renderStandings(LAST_STANDINGS);
   renderRace();
+}
+let KIT_JOB = 0;
+function computeKitColors(){
+  const active=activeNicks();
+  if(!active.length) return;
+  KIT_COLOR={};
+  active.forEach((n,i)=>{ KIT_COLOR[n] = i<KIT_BASE.length ? KIT_BASE[i] : KIT_SPARE; });
+  paintKits();
+  const job = ++KIT_JOB;
+  active.slice(0, KIT_HUES.length).forEach((nick,i)=>{
+    const photo = (typeof IMG!=="undefined") ? IMG[nick] : null;
+    if(!photo) return;
+    shadeFromPhoto(photo, KIT_HUES[i]).then(shade=>{
+      if(job!==KIT_JOB || !shade) return;
+      KIT_COLOR[nick]=shade;
+      paintKits();
+    });
+  });
 }
 function renderSquad(){
   const cell = (n,l) => `<div class="ss"><div class="ss-n">${n}</div><div class="ss-l">${l}</div></div>`;
