@@ -392,6 +392,10 @@ svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 .h2h-duels{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
 .duel{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid rgba(170,160,220,.08);flex-wrap:wrap}
 .duel:last-child{border-bottom:none}
+@media(max-width:760px){
+  .duel{flex-direction:column;align-items:flex-start;gap:6px}
+  .duel>*{width:100%}
+}
 .dn{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px}
 .dn .dd{font-family:'Nunito',sans-serif;font-weight:400;font-size:11px;color:var(--muted);margin-left:8px}
 .dr{font-family:'Nunito',sans-serif;font-size:13px;color:var(--silver)}
