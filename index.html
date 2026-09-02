@@ -1637,7 +1637,7 @@ function breakdownItalic(code, year, tournaments){
   const tY = t => parseInt((t.date||"").split(".")[2],10);
   if(cat==="Y"){
     if(now >= new Date(year, 9, 1)) return false;            // September has passed without it being played
-    if(tournaments.some(t=>t.catCode==="Y")) return false;   // annual played this season
+    if(tournaments.some(t=>t.catCode==="Y" && !t.upcoming)) return false;   // annual already played
     return true;
   }
   if(cat==="Q"){
@@ -1645,14 +1645,14 @@ function breakdownItalic(code, year, tournaments){
     const qm = {4:[10,11,12], 1:[1,2,3], 2:[4,5,6], 3:[7,8,9]}[q]; if(!qm) return false;
     const qy = q===4 ? year-1 : year;
     if(now >= new Date(qy, qm[qm.length-1], 1)) return false; // quarter passed
-    if(tournaments.some(t=>t.catCode==="Q" && qm.includes(tM(t)) && tY(t)===qy)) return false;
+    if(tournaments.some(t=>t.catCode==="Q" && !t.upcoming && qm.includes(tM(t)) && tY(t)===qy)) return false;
     return true;
   }
   // M (monthly) or D (ad hoc)
   const m = parseInt(code.slice(1),10); if(!m) return false;
   const my = m>=9 ? year-1 : year;
   if(now >= new Date(my, m, 1)) return false;                // month passed
-  if(cat==="M" && tournaments.some(t=>t.catCode==="M" && tM(t)===m && tY(t)===my)) return false;
+  if(cat==="M" && tournaments.some(t=>t.catCode==="M" && !t.upcoming && tM(t)===m && tY(t)===my)) return false;
   return true;
 }
 function renderBreakdown(csvText, targetId, ctx={}){
@@ -2118,12 +2118,13 @@ async function loadSeason(year){
     }));
     _seasonCache[year] = data;
   }
-  const rows = applyTournamentStats(data.standings, data.tournaments);
+  const playedTourns = (data.tournaments||[]).filter(t=>!t.upcoming);
+  const rows = applyTournamentStats(data.standings, playedTourns);
   renderStandings(rows, "sp-standings");
-  renderBreakdown(data.rawStandings, "sp-breakdown", {year, tournaments:data.tournaments||[]});
+  renderBreakdown(data.rawStandings, "sp-breakdown", {year, tournaments:playedTourns});
   renderScorers(data.scorers||[], "sp-scorers", {date:true});
-  renderTournaments(data.tournaments||[], "sp-tourns", {detailed:true});
-  buildTOTS(data.tournaments||[], data.scorers||[], "sp-tots");
+  renderTournaments(playedTourns, "sp-tourns", {detailed:true});
+  buildTOTS(playedTourns, data.scorers||[], "sp-tots");
   renderSheetTable(data.rawScoring, "sp-scoring");
   document.getElementById("sp-champ").textContent = rows[0] ? rows[0].nick : "-";
   const top = (data.scorers||[])[0];
