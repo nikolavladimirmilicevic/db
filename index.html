@@ -612,7 +612,8 @@ svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 #draw-page .empty-ball{width:44px;height:44px;border-radius:50%;margin:0 auto 16px;background:radial-gradient(circle at 35% 30%,#fff 0 26%,#e7e7e7 27% 52%,#22303c 53%);box-shadow:0 8px 22px -8px rgba(0,0,0,.6)}
 #draw-page .empty-t{font-family:'Fredoka',sans-serif;font-weight:600;font-size:22px;color:var(--white)}
 #draw-page .empty-s{margin:7px 0 0;color:var(--muted);font-size:15px}.empty-s b{color:var(--gold);font-weight:700}
-@media(max-width:900px){#draw-page .grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:520px){.grid{grid-template-columns:1fr}}
+@media(max-width:900px){#draw-page .grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){#draw-page .grid{grid-template-columns:1fr}}
 #draw-page .group{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);animation:rise .45s cubic-bezier(.2,.7,.25,1) forwards}
 #draw-page .grid.capture-ready .group{animation:none !important;opacity:1 !important;transform:none !important}
 @keyframes rise{to{opacity:1;transform:none}}
@@ -620,17 +621,23 @@ svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 #draw-page .g-letter{font-family:'Fredoka',sans-serif;font-weight:700;color:var(--white);font-size:28px;line-height:1}
 #draw-page .g-letter small{font-family:'Nunito',sans-serif;font-weight:700;font-size:10px;letter-spacing:.16em;color:var(--muted);display:block;margin-bottom:1px;text-transform:uppercase}
 #draw-page .g-mini{display:flex;gap:4px}.g-mini i{width:7px;height:7px;border-radius:2px;display:block}
-#draw-page .row{display:grid;grid-template-columns:26px 30px 1fr auto;align-items:center;gap:9px;padding:8px 14px 8px 11px;border-left:4px solid transparent;border-bottom:1px solid var(--line)}
+#draw-page .row{display:grid;grid-template-columns:26px 30px minmax(72px,1fr) auto;align-items:center;gap:9px;padding:8px 14px 8px 11px;border-left:4px solid transparent;border-bottom:1px solid var(--line)}
 #draw-page .row:last-child{border-bottom:none}
 #draw-page .row .pot{font-size:10.5px;font-weight:700;color:var(--muted)}
 #draw-page .badge{width:30px;height:30px;border-radius:7px;display:grid;place-items:center;font-family:'Fredoka',sans-serif;font-weight:700;font-size:11px;border:1px solid rgba(0,0,0,.14);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-#draw-page .row .name{font-weight:700;font-size:15px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#draw-page .row .name{font-weight:700;font-size:15px;color:var(--white);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 #draw-page .nat{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:800}
 #draw-page .natflag{width:18px;height:13px;object-fit:cover;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.12);display:block}
 #draw-page .nat-Esp{border-left-color:var(--esp)}.t-Esp{color:#f2607f}
 #draw-page .nat-Eng{border-left-color:var(--eng)}.t-Eng{color:#6fa0f0}
 #draw-page .foot{margin-top:24px;color:var(--muted);font-size:13px;line-height:1.55;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 #draw-page .foot b{color:var(--silver);font-weight:700}.foot .mono{font-weight:700;font-size:11.5px;letter-spacing:.05em;color:var(--muted)}
+@media(max-width:420px){
+  #draw-page .row{grid-template-columns:22px 26px minmax(64px,1fr) auto;gap:7px;padding-left:9px;padding-right:10px}
+  #draw-page .badge{width:26px;height:26px;font-size:10px}
+  #draw-page .row .name{font-size:14px}
+  #draw-page .nat{font-size:0;gap:0}
+}
 @media (prefers-reduced-motion: reduce){#draw-page .group{animation:none;opacity:1;transform:none}}
 </style>
 </head>
@@ -2520,8 +2527,6 @@ async function shareGroups(){
       backgroundColor:getComputedStyle(document.body).backgroundColor||"#201b45",
       scale:2, useCORS:true,
       scrollX:0, scrollY:-window.scrollY,
-      windowWidth:document.documentElement.scrollWidth,
-      windowHeight:document.documentElement.scrollHeight,
       width:grid.scrollWidth, height:grid.scrollHeight
     });
     await new Promise(res=>canvas.toBlob(async blob=>{
