@@ -1206,6 +1206,12 @@ function renderScorersView(){
   renderScorers(sorted, "scorers", {date:true, sortable:true, sort:SCORER_SORT});
 }
 function renderScorers(list, target="scorers", opts={}){
+  if(!list.length){
+    const el0=document.getElementById(target);
+    if(el0) el0.innerHTML = `<div class="loading-cell">No performances yet this season.</div>`;
+    const mb=document.getElementById(target+"-more"); if(mb) mb.hidden=true;
+    return;
+  }
   const d = !!opts.date, sortable = !!opts.sortable, st = opts.sort||null;
   const arr = key => (sortable && st && st.key===key) ? (st.dir<0?" \u25be":" \u25b4") : "";
   const th = (key,label,cls) => sortable ? `<th class="${cls?cls+' ':''}sortable" onclick="scorerSort('${key}')">${label}${arr(key)}</th>` : `<th${cls?` class="${cls}"`:""}>${label}</th>`;
@@ -1446,7 +1452,7 @@ function renderUpcoming(){
 function renderLatest(){
   const el=document.getElementById("latest"); if(!el) return;
   const list=[...(CUR_TOURNAMENTS||[])].sort((a,b)=> tournKey(b.date)-tournKey(a.date) || (b.idx||0)-(a.idx||0));
-  const t=list[0]; if(!t){ el.innerHTML=""; return; }
+  const t=list[0]; if(!t){ el.innerHTML=`<div class="loading-cell">The first result of the season appears here.</div>`; return; }
   const catName={M:"Monthly",Q:"Quarterly",D:"Ad hoc",Y:"Annual"}[t.catCode]||t.cat||""; const catCls="cat-"+(t.catCode||"x");
   const podium=[...t.teams].filter(x=>x.place!=null).sort((a,b)=>a.place-b.place).slice(0,3);
   const medal=p=>p===1?"lp-1":p===2?"lp-2":p===3?"lp-3":"lp-x";
@@ -1466,7 +1472,7 @@ function renderTournsView(){
   let list=(CUR_TOURNAMENTS||[]).slice();
   if(TOURN_FILTER.cat!=="all") list=list.filter(t=>t.catCode===TOURN_FILTER.cat);
   if(TOURN_FILTER.player!=="all"){ const pl=TOURN_FILTER.player; list=list.filter(t=>t.teams.some(tm=>(tm.by||"").split(" + ").map(x=>x.trim()).includes(pl))); }
-  if(!list.length){ el.innerHTML=`<div class="loading-cell">No tournaments match this filter.</div>`; const b=document.getElementById("tourns-more"); if(b) b.hidden=true; return; }
+  if(!list.length){ el.innerHTML=`<div class="loading-cell">${(CUR_TOURNAMENTS||[]).length?"No tournaments match this filter.":"No tournaments played yet this season."}</div>`; const b=document.getElementById("tourns-more"); if(b) b.hidden=true; return; }
   renderTournaments(list, "tourns");
 }
 function fillTournPlayers(){
@@ -1851,11 +1857,20 @@ function loadTournaments(){
   }
   return _tournamentsPromise;
 }
+const LIVE_OK = {};
 async function tryLiveTable(){
   const res = await fetch(csvUrl(GID.table), {mode:"cors"});
   if(!res.ok) throw new Error("table unavailable");
+  LIVE_OK.standings = true;
   const base = parse26ta(await res.text());
-  if(!base.length) throw new Error("no rows parsed");
+  if(!base.length){
+    renderStandings([]);
+    document.getElementById("standings").innerHTML =
+      `<tr><td colspan="9" class="loading-cell">The table fills up once the first tournament of the season is played.</td></tr>`;
+    CURRENT_PTS = {}; computeKitColors(); renderSquad(); renderRecords();
+    if(window.drawsDataChanged) window.drawsDataChanged();
+    return;
+  }
   let tournaments = [];
   try { tournaments = await loadTournaments(); } catch(e){}
   const rows = applyTournamentStats(base, tournaments);
@@ -1905,8 +1920,14 @@ function parse26i(csvText){
 async function tryLiveScorers(){
   const res = await fetch(csvUrl(GID.scorers), {mode:"cors"});
   if(!res.ok) throw new Error("scorers unavailable");
+  LIVE_OK.scorers = true;
   const list = parse26i(await res.text());
-  if(!list.length) throw new Error("no performances");
+  if(!list.length){
+    SCORERS_LIST = []; renderScorersView(); computeTOTS();
+    const sb1=document.getElementById("sb-scorer"), sb2=document.getElementById("sb-assist");
+    if(sb1) sb1.innerHTML = "\u2014"; if(sb2) sb2.innerHTML = "\u2014";
+    return;
+  }
   SCORERS_LIST = list; renderScorersView(); computeTOTS();
   const surname = p => p.player.split(" ").pop();
   const topTotal   = list[0];
@@ -1977,7 +1998,7 @@ function parse26tu(csvText){
 }
 async function tryLiveTournaments(){
   const list = await loadTournaments();
-  if(!list.length) throw new Error("no tournaments");
+  LIVE_OK.tourns = true;
   UPCOMING_TOURNAMENTS = list.filter(t=>t.upcoming); CUR_TOURNAMENTS = list.filter(t=>!t.upcoming); renderTournsView(); renderLatest(); computeTOTS(); renderUpcoming(); if(window.drawsDataChanged) window.drawsDataChanged();
   if(document.getElementById("h2h-result")) renderH2H(); renderRace();
 }
@@ -2081,15 +2102,15 @@ setTimeout(()=>{ tryLivePOTS().catch(()=>console.info("Player of the Season not 
    (a section is still "loading" only if live never replaced its placeholder) */
 setTimeout(()=>{
   const still = id => document.querySelector("#"+id+" .loading-cell");
-  if(still("standings")){ renderStandings(applyTournamentStats(SAMPLE_STANDINGS, SAMPLE_TOURNAMENTS)); setLeader(SAMPLE_STANDINGS); }
-  if(still("scorers")){
+  if(still("standings") && !LIVE_OK.standings){ renderStandings(applyTournamentStats(SAMPLE_STANDINGS, SAMPLE_TOURNAMENTS)); setLeader(SAMPLE_STANDINGS); }
+  if(still("scorers") && !LIVE_OK.scorers){
     SCORERS_LIST = SAMPLE_PERFORMANCES; renderScorersView(); computeTOTS();
     const surname = p => p.player.split(" ").pop();
     const tt=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.tot-a.tot)[0], tg=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.g-a.g)[0], ta=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.a-a.a)[0];
     document.getElementById("sb-scorer").innerHTML = `${tg===tt?SB_STAR:""}${surname(tg)} <small>${tg.g}</small>`;
     document.getElementById("sb-assist").innerHTML = `${ta===tt?SB_STAR:""}${surname(ta)} <small>${ta.a}</small>`;
   }
-  if(still("tourns")){ UPCOMING_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>t.upcoming); CUR_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>!t.upcoming); renderTournsView(); renderLatest(); computeTOTS(); renderUpcoming(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
+  if(still("tourns") && !LIVE_OK.tourns){ UPCOMING_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>t.upcoming); CUR_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>!t.upcoming); renderTournsView(); renderLatest(); computeTOTS(); renderUpcoming(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
   if(still("alltime-table")){ renderAllTime(VECNA); }
 }, 3500);
 
