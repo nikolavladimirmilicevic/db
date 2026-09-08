@@ -973,59 +973,13 @@ const KITS = {
 
 /* ---------- current standings (fallback = real numbers from the standings feed) ----------
    Live, these are read straight from the tab, since the source already provides totals. */
-const SAMPLE_STANDINGS = [
-  {pos:1, nick:"Nino",     kit:KITS["Nino"],     ttl:7,  fin:6, sf:7, pts:10593, form:[5,2,1,1,2]},
-  {pos:2, nick:"Mili",     kit:KITS["Mili"],     ttl:15, fin:7, sf:6, pts:10380, form:[1,5,1,1,7]},
-  {pos:3, nick:"Golranče", kit:KITS["Golranče"], ttl:10, fin:5, sf:5, pts:5843,  form:[5,2,3,7,2]},
-  {pos:4, nick:"Peđa",     kit:KITS["Peđa"],     ttl:0,  fin:1, sf:3, pts:514,   form:[8,8,6,6,7]}
-];
+
 
 /* real top single-game hauls from the performances feed (goals + assists) */
-const SAMPLE_PERFORMANCES = [
-  {player:"Lautaro Martínez", club:"Argentina",     by:"Mili",            g:13, a:1, tot:14},
-  {player:"Kylian Mbappé",    club:"Real Madrid",    by:"Golranče",        g:11, a:3, tot:14},
-  {player:"Antoine Semenyo",  club:"Ghana",          by:"Nino",            g:10, a:4, tot:14},
-  {player:"Odsonne Édouard",  club:"RC Lens",        by:"Mili + Golranče", g:10, a:3, tot:13},
-  {player:"Timothy Weah",     club:"United States",  by:"Mili",            g:10, a:2, tot:12},
-  {player:"Lionel Messi",     club:"Argentina",      by:"Mili",            g:3,  a:7, tot:10}
-];
+
 
 /* recent tournaments (fallback preview; live reads all of the tournaments feed) */
-const SAMPLE_TOURNAMENTS = [
-  {date:"23.8.2026", name:"Bottom 8", cat:"Ad hoc", catCode:"D", teams:[
-    {place:2, club:"New Zealand", by:"Nino + Golranče", points:12},
-    {place:7, club:"Curaçao", by:"Mili + Peđa", points:0}]},
-  {date:"25.7.2026", name:"FIFA World Cup", cat:"Quarterly", catCode:"Q", teams:[
-    {place:1, club:"Argentina", by:"Mili", points:2000},
-    {place:6, club:"France", by:"Peđa", points:0},
-    {place:7, club:"Spain", by:"Golranče", points:0}]},
-  {date:"11.7.2026", name:"Top 8", cat:"Ad hoc", catCode:"D", teams:[
-    {place:1, club:"Portugal", by:"Mili", points:15},
-    {place:3, club:"England", by:"Golranče", points:3},
-    {place:6, club:"France", by:"Peđa", points:0}]},
-  {date:"7.7.2026", name:"Africa Cup of Nations", cat:"Monthly", catCode:"M", teams:[
-    {place:1, club:"Ghana", by:"Nino", points:1000},
-    {place:2, club:"Morocco", by:"Golranče", points:600},
-    {place:5, club:"Ivory Coast", by:"Mili", points:0},
-    {place:8, club:"Senegal", by:"Peđa", points:0}]},
-  {date:"19.6.2026", name:"Random", cat:"Ad hoc", catCode:"D", teams:[
-    {place:1, club:"United States", by:"Mili", points:15},
-    {place:5, club:"Uruguay", by:"Golranče", points:0},
-    {place:8, club:"Czechia", by:"Peđa", points:0}]},
-  {date:"19.6.2026", name:"Top 8", cat:"Ad hoc", catCode:"D", teams:[
-    {place:3, club:"Portugal", by:"Mili", points:3},
-    {place:5, club:"Spain", by:"Golranče", points:0},
-    {place:8, club:"France", by:"Peđa", points:0}]},
-  {date:"12.6.2026", name:"UEFA European Championship", cat:"Monthly", catCode:"M", teams:[
-    {place:2, club:"Spain", by:"Nino", points:600},
-    {place:4, club:"France", by:"Peđa", points:360},
-    {place:7, club:"Portugal", by:"Mili", points:0}]},
-  {date:"8.5.2026", name:"Serie A: Volume 2", cat:"Monthly", catCode:"M", teams:[
-    {place:1, club:"Juventus FC", by:"Golranče", points:1000},
-    {place:2, club:"ACF Fiorentina", by:"Mili", points:600},
-    {place:5, club:"SS Lazio", by:"Nino", points:0},
-    {place:8, club:"AS Roma", by:"Peđa", points:0}]}
-];
+
 
 const IMG = {
   "Mili":      "players/mili.jpg",
@@ -1285,7 +1239,7 @@ const KIT_BASE = ["#2f66d6", "#f23e50", "#f5c518", "#3fbf6a"];
 const KIT_SPARE = "#8686de";
 function activeNicks(){
   if(LAST_STANDINGS && LAST_STANDINGS.length) return LAST_STANDINGS.map(r=>r.nick);
-  return (SAMPLE_STANDINGS||[]).map(r=>r.nick);
+  return (typeof SQUAD!=="undefined" ? SQUAD.map(p=>p.nick) : []);
 }
 function rgbToHsl(r,g,b){
   r/=255; g/=255; b/=255;
@@ -2082,7 +2036,7 @@ document.getElementById("tourns").innerHTML        = `<div class="loading-cell">
 document.getElementById("alltime-table").innerHTML = `<tbody><tr><td class="loading-cell">Loading&hellip;</td></tr></tbody>`;
 renderSquad();
 learnNicks(HONOURS.map(h=>h.champ));
-learnNicks(SAMPLE_STANDINGS.map(r=>r.nick));
+learnNicks((typeof SQUAD!=="undefined" ? SQUAD.map(p=>p.nick) : []));
 renderHonours();
 renderRecords();
 fillH2H();
@@ -2098,19 +2052,20 @@ tryLiveScorers().catch(()=>console.info("Performances not loaded."));
 tryLiveVecna().catch(()=>console.info("All-time not loaded."));
 setTimeout(()=>{ tryLivePOTS().catch(()=>console.info("Player of the Season not loaded.")); }, 400);
 
-/* resilience: if the sheet hasn't answered in a few seconds, fall back to the sample
-   (a section is still "loading" only if live never replaced its placeholder) */
+/* if the sheet still hasn't answered, say so - never show made-up data */
 setTimeout(()=>{
   const still = id => document.querySelector("#"+id+" .loading-cell");
-  if(still("standings") && !LIVE_OK.standings){ renderStandings(applyTournamentStats(SAMPLE_STANDINGS, SAMPLE_TOURNAMENTS)); setLeader(SAMPLE_STANDINGS); }
-  if(still("scorers") && !LIVE_OK.scorers){
-    SCORERS_LIST = SAMPLE_PERFORMANCES; renderScorersView(); computeTOTS();
-    const surname = p => p.player.split(" ").pop();
-    const tt=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.tot-a.tot)[0], tg=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.g-a.g)[0], ta=[...SAMPLE_PERFORMANCES].sort((a,b)=>b.a-a.a)[0];
-    document.getElementById("sb-scorer").innerHTML = `${tg===tt?SB_STAR:""}${surname(tg)} <small>${tg.g}</small>`;
-    document.getElementById("sb-assist").innerHTML = `${ta===tt?SB_STAR:""}${surname(ta)} <small>${ta.a}</small>`;
+  const fail = (id,msg)=>{ const el=document.getElementById(id); if(el) el.innerHTML=`<div class="loading-cell">${msg}</div>`; };
+  if(still("standings") && !LIVE_OK.standings){
+    const el=document.getElementById("standings");
+    if(el) el.innerHTML=`<tr><td colspan="9" class="loading-cell">Could not load the table. Try the refresh button.</td></tr>`;
   }
-  if(still("tourns") && !LIVE_OK.tourns){ UPCOMING_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>t.upcoming); CUR_TOURNAMENTS = (SAMPLE_TOURNAMENTS||[]).filter(t=>!t.upcoming); renderTournsView(); renderLatest(); computeTOTS(); renderUpcoming(); if(document.getElementById("h2h-result")) renderH2H(); renderRace(); }
+  if(still("scorers") && !LIVE_OK.scorers){
+    fail("scorers","Could not load performances. Try the refresh button.");
+    const sb1=document.getElementById("sb-scorer"), sb2=document.getElementById("sb-assist");
+    if(sb1) sb1.innerHTML="\u2014"; if(sb2) sb2.innerHTML="\u2014";
+  }
+  if(still("tourns") && !LIVE_OK.tourns) fail("tourns","Could not load tournaments. Try the refresh button.");
   if(still("alltime-table")){ renderAllTime(VECNA); }
 }, 3500);
 
