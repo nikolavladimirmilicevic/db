@@ -1237,9 +1237,16 @@ const KIT_HUES = [
 ];
 const KIT_BASE = ["#2f66d6", "#f23e50", "#f5c518", "#3fbf6a"];
 const KIT_SPARE = "#8686de";
+/* active competitors, ordered by their place on the all-time list */
 function activeNicks(){
-  if(LAST_STANDINGS && LAST_STANDINGS.length) return LAST_STANDINGS.map(r=>r.nick);
-  return (typeof SQUAD!=="undefined" ? SQUAD.map(p=>p.nick) : []);
+  const active = (typeof SQUAD!=="undefined") ? SQUAD.map(p=>p.nick) : [];
+  if(!active.length) return [];
+  const na = n => String(n||"").trim().toLowerCase();
+  const rank = ((typeof VECNA!=="undefined" && VECNA.rows) ? VECNA.rows : []).map(r=>na(r.name));
+  return active.slice().sort((a,b)=>{
+    const ia=rank.indexOf(na(a)), ib=rank.indexOf(na(b));
+    return (ia<0?999:ia) - (ib<0?999:ib);
+  });
 }
 function rgbToHsl(r,g,b){
   r/=255; g/=255; b/=255;
