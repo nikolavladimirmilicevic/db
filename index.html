@@ -463,11 +463,12 @@ svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 .xi-by-kit{width:8px;height:8px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
 .xi-cap{position:absolute;top:-4px;right:-4px;width:17px;height:17px;border-radius:50%;background:#f5c518;color:#1a1533;font-family:'Fredoka',sans-serif;font-weight:600;font-size:9px;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;width:100%;white-space:normal;line-height:1.2;color:var(--white)}
+.xi-dot.has-rt{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:.2px}
 .xi-GK .xi-dot{background:var(--silver);color:var(--ink)}
 .xi-DF .xi-dot{background:#2f66d6;color:#fff}
 .xi-MF .xi-dot{background:var(--cyan);color:var(--ink)}
 .xi-FW .xi-dot{background:#f23e50;color:#fff}
-@media(max-width:620px){.xi-row{max-width:none}.xi-player{width:66px}.xi-dot{width:34px;height:34px;font-size:10px}.xi-nm{font-size:10px}}
+@media(max-width:620px){.xi-row{max-width:none}.xi-player{width:66px}.xi-dot{width:34px;height:34px;font-size:10px}.xi-dot.has-rt{font-size:12px}.xi-nm{font-size:10px}}
 .up-tourn{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
 .up-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .up-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px}
@@ -1337,6 +1338,68 @@ function renderSquad(){
     </a>`;
   }).join("");
 }
+/* ---- Club kit colours for the ideal XI circles ---- */
+const CLUB_KIT_DATA = "arsenal|ef0107|ffffff;aston villa|670e36|95bfe5;bournemouth|da291c|111111;brentford|e30613|ffffff;brighton|0057b8|ffffff;brighton and hove albion|0057b8|ffffff;burnley|6c1d45|99d6ea;chelsea|034694|ffffff;crystal palace|1b458f|c4122e;everton|003399|ffffff;fulham|ffffff|111111;leeds united|ffffff|1d428a;leicester city|003090|fdbe11;liverpool|c8102e|ffffff;manchester city|6cabdd|0a3a66;man city|6cabdd|0a3a66;manchester united|da020e|fbe122;man united|da020e|fbe122;man utd|da020e|fbe122;newcastle united|241f20|ffffff;newcastle|241f20|ffffff;nottingham forest|dd0000|ffffff;forest|dd0000|ffffff;sheffield united|ee2737|111111;southampton|d71920|ffffff;sunderland|eb172b|ffffff;tottenham hotspur|ffffff|132257;tottenham|ffffff|132257;spurs|ffffff|132257;west ham united|7a263a|1bb1e7;west ham|7a263a|1bb1e7;wolverhampton wanderers|fdb913|231f20;wolves|fdb913|231f20;ipswich town|3a64a3|ffffff;norwich city|fff200|00a650;watford|fbee23|11210c;stoke city|e03a3e|ffffff;middlesbrough|dc2429|ffffff;derby county|ffffff|111111;birmingham city|1a3a9c|ffffff;blackburn rovers|009ee0|ffffff;" +
+"barcelona|a50044|ffe400;real madrid|ffffff|1b3b6f;atletico madrid|cb3524|ffffff;atletico de madrid|cb3524|ffffff;atleti|cb3524|ffffff;athletic bilbao|ee2523|ffffff;athletic club|ee2523|ffffff;real sociedad|0067b1|ffffff;real betis|00954c|ffffff;betis|00954c|ffffff;sevilla|ffffff|d9182e;valencia|ffffff|ee7c00;villarreal|ffe667|004b87;celta vigo|8ac3ee|e5231f;celta|8ac3ee|e5231f;getafe|005999|ffffff;osasuna|0a346f|ffffff;rayo vallecano|ffffff|e53027;espanyol|0077c8|ffffff;alaves|005bac|ffffff;elche|ffffff|00944d;girona|e0152b|ffffff;mallorca|e20613|ffe000;las palmas|ffe400|005ca9;levante|004fa3|b4053d;cadiz|ffe500|002d62;granada|a61b2b|ffffff;real valladolid|621c44|ffffff;valladolid|621c44|ffffff;leganes|0b4ea2|ffffff;almeria|e63329|ffffff;eibar|0c2c67|e63329;deportivo la coruna|0e4fa1|ffffff;real zaragoza|ffffff|004a99;" +
+"juventus|ffffff|111111;juve|ffffff|111111;inter|0068a8|111111;inter milan|0068a8|111111;internazionale|0068a8|111111;milan|fb090b|111111;ac milan|fb090b|111111;napoli|12a0d7|ffffff;roma|8e1f2f|f0bc42;lazio|87d8f7|0b2240;atalanta|1d1d1b|2a6bb0;fiorentina|592c82|ffffff;torino|8a1538|ffffff;bologna|1a2f48|a21c2b;sassuolo|00a752|111111;udinese|ffffff|111111;genoa|c8102e|002b5c;sampdoria|0f3e8c|ffffff;cagliari|00205b|a6192e;hellas verona|ffe500|00305e;verona|ffe500|00305e;lecce|ffe500|e2001a;empoli|0073c8|ffffff;monza|e2001a|ffffff;parma|ffe500|003a70;como|0b2c5e|ffffff;venezia|0b1c2c|e2a900;" +
+"bayern munich|dc052d|ffffff;bayern|dc052d|ffffff;borussia dortmund|fde100|111111;dortmund|fde100|111111;rb leipzig|dd0741|ffffff;leipzig|dd0741|ffffff;bayer leverkusen|e32221|111111;leverkusen|e32221|111111;eintracht frankfurt|111111|e1000f;frankfurt|111111|e1000f;borussia monchengladbach|ffffff|11a64a;gladbach|ffffff|11a64a;stuttgart|ffffff|e32219;wolfsburg|65b32e|ffffff;schalke|004d9d|ffffff;werder bremen|1d9053|ffffff;hoffenheim|1c63b7|ffffff;freiburg|e2001a|ffffff;mainz|c3141e|ffffff;union berlin|e3261c|ffe500;hertha berlin|004d9d|ffffff;augsburg|ba3733|ffffff;hamburger sv|005ca9|ffffff;" +
+"paris saint germain|004170|da291c;psg|004170|da291c;marseille|2faee0|ffffff;olympique marseille|2faee0|ffffff;lyon|ffffff|1a3a6b;olympique lyonnais|ffffff|1a3a6b;monaco|e63329|ffffff;lille|e01e13|ffffff;nice|e2001a|111111;rennes|9e1b32|111111;saint etienne|00843d|ffffff;nantes|ffe500|11a64a;bordeaux|00285e|9e1b32;lens|ffe500|e2001a;montpellier|0b2c5e|e2001a;strasbourg|00a3e0|ffffff;toulouse|6a2c8f|ffffff;" +
+"ajax|ffffff|d2122e;psv|e2001a|ffffff;psv eindhoven|e2001a|ffffff;feyenoord|c8102e|ffffff;az alkmaar|da291c|ffffff;benfica|d40000|ffffff;porto|00428c|ffffff;sporting|008057|ffffff;sporting cp|008057|ffffff;sporting lisbon|008057|ffffff;braga|9e1b32|ffffff;galatasaray|e8a50b|a90432;fenerbahce|ffe500|00235b;besiktas|111111|ffffff;trabzonspor|7b1e29|6cb2e4;club brugge|0a4595|111111;anderlecht|6a1f2b|ffffff;shakhtar donetsk|f26522|111111;zenit|009bdf|0a2c5e;spartak moscow|e2001a|ffffff;cska moscow|004a99|e2001a;dynamo kyiv|ffffff|0a4595;crvena zvezda|e2001a|ffffff;red star belgrade|e2001a|ffffff;partizan|111111|ffffff;olympiacos|d2122e|ffffff;panathinaikos|006a3b|ffffff;celtic|018749|ffffff;rangers|1a2f9c|ffffff;basel|e2001a|00529b;young boys|ffe500|111111;salzburg|e2001a|ffffff;rapid wien|11a64a|ffffff;dinamo zagreb|0057b8|ffffff;legia warsaw|11a64a|ffffff;boca juniors|0b3e8c|fdb913;river plate|ffffff|e2001a;flamengo|c8102e|111111;palmeiras|006437|ffffff;corinthians|111111|ffffff;santos|ffffff|111111;sao paulo|ffffff|e2001a;gremio|0d80bf|111111;al nassr|ffe500|0a4595;al hilal|0a4595|ffffff;" +
+"argentina|75aadb|ffffff;brazil|ffdf00|009739;france|1f3a93|ffffff;england|ffffff|ce1124;spain|c60b1e|ffc400;germany|ffffff|111111;italy|0066b2|ffffff;portugal|c60b1e|046a38;netherlands|f36c21|ffffff;belgium|c8102e|ffe500;croatia|ffffff|e2001a;serbia|c6363c|ffffff;uruguay|74aee0|111111;colombia|ffe500|0a3161;mexico|006847|ffffff;usa|ffffff|0a3161;japan|0a1d63|ffffff;south korea|e2001a|ffffff;australia|ffe500|00843d;switzerland|d52b1e|ffffff;denmark|c60c30|ffffff;sweden|ffe500|0057b8;norway|ba0c2f|ffffff;poland|ffffff|dc143c;ukraine|ffe500|0057b8;russia|ffffff|0039a6;turkey|e30a17|ffffff;austria|ed2939|ffffff;czech republic|d7141a|ffffff;wales|c8102e|ffffff;scotland|005eb8|ffffff;ireland|169b62|ff883e;nigeria|008751|ffffff;senegal|00853f|fdef42;morocco|c1272d|006233;egypt|ce1126|ffffff;ghana|ffffff|006b3f;cameroon|007a5e|fcd116;ivory coast|f77f00|009e60;algeria|007229|ffffff;tunisia|e70013|ffffff;chile|d52b1e|0039a6;peru|ffffff|d91023;ecuador|ffd100|0a3161;paraguay|e2001a|0038a8;costa rica|e2001a|002b7f;canada|d80621|ffffff;china|de2910|ffe500;saudi arabia|006c35|ffffff;iran|ffffff|239f40;qatar|8a1538|ffffff;greece|0d5eaf|ffffff;romania|ffe500|002b7f;hungary|cd2a3e|ffffff;bosnia and herzegovina|002f6c|ffe500;slovenia|ffffff|005da4;slovakia|0b4ea2|ffffff;finland|ffffff|003580;iceland|02529c|ffffff;north macedonia|d20000|ffe500;montenegro|c40308|ffd100;albania|e41e20|111111;new zealand|ffffff|111111;south africa|007a4d|ffb81c;jamaica|111111|ffd100";
+const CLUB_DROP = new Set(["fc","afc","ac","as","sc","ssc","cf","cd","rcd","ud","sd","rc","us","ss","sv","vfb","vfl","tsg","fsv","bsc","sk","nk","hnk","fk","bk","if","cp","club","de","the"]);
+function clubKey(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/&/g," and ").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+function clubKeyShort(s){ return clubKey(s).split(" ").filter(w=>!CLUB_DROP.has(w)).join(" "); }
+let CLUB_KIT_MAP = null;
+function clubKitMap(){
+  if(CLUB_KIT_MAP) return CLUB_KIT_MAP;
+  const m={};
+  const put=(n,bg,fg)=>{ if(!n||!bg||!fg) return; const k=clubKey(n); if(k&&!m[k]) m[k]={bg,fg}; const s=clubKeyShort(n); if(s&&!m[s]) m[s]={bg,fg}; };
+  CLUB_KIT_DATA.split(";").forEach(row=>{ const p=row.split("|"); if(p.length<3) return; put(p[0], "#"+p[1], "#"+p[2]); });
+  if(typeof CLUBS!=="undefined" && Array.isArray(CLUBS)) CLUBS.forEach(c=>{ put(c.name,c.bg,c.fg); if(c.disp) put(c.disp,c.bg,c.fg); });
+  CLUB_KIT_MAP=m; return m;
+}
+function hexRgb(h){ let s=String(h||"").replace("#","").trim();
+  if(s.length===3) s=s[0]+s[0]+s[1]+s[1]+s[2]+s[2];
+  const n=parseInt(s,16); if(isNaN(n)||s.length!==6) return [128,128,128];
+  return [(n>>16)&255,(n>>8)&255,n&255]; }
+function relLum(hex){ const c=hexRgb(hex).map(v=>{ const x=v/255; return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4); });
+  return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
+function kitContrast(a,b){ const la=relLum(a), lb=relLum(b); return (Math.max(la,lb)+0.05)/(Math.min(la,lb)+0.05); }
+function hslHex(h,s,l){ const a=s*Math.min(l,1-l);
+  const f=n=>{ const k=(n+h/30)%12; const v=l-a*Math.max(-1,Math.min(k-3,Math.min(9-k,1)));
+    return Math.round(255*v).toString(16).padStart(2,"0"); };
+  return "#"+f(0)+f(8)+f(4); }
+function clubKit(club){
+  const m=clubKitMap(), k=clubKey(club);
+  let hit = m[k] || m[clubKeyShort(club)];
+  if(!hit){ const src=k||"x"; let h=2166136261;
+    for(let i=0;i<src.length;i++){ h^=src.charCodeAt(i); h=Math.imul(h,16777619); }
+    hit={ bg:hslHex((h>>>0)%360, 0.44, 0.40), fg:"#ffffff" }; m[k]=hit; }
+  let fg=hit.fg;
+  if(kitContrast(hit.bg,fg)<3.2) fg = relLum(hit.bg)>0.38 ? "#17132e" : "#ffffff";
+  const ring = relLum(hit.bg)>0.55 ? "rgba(12,8,34,.22)" : "rgba(255,255,255,.18)";
+  return { bg:hit.bg, fg, ring };
+}
+function bestClubOf(cl){
+  const arr=Object.entries(cl||{}); if(!arr.length) return "";
+  arr.sort((A,B)=>{ const a=A[1], b=B[1];
+    if(b.pts!==a.pts) return b.pts-a.pts;
+    for(let i=0;i<8;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; }
+    if(b.n!==a.n) return b.n-a.n;
+    return A[0].localeCompare(B[0]); });
+  return arr[0][0];
+}
+function xiClubStat(a, club, pts, place){
+  if(!club) return;
+  const s=(a.cl[club]=a.cl[club]||{pts:0,g:[0,0,0,0,0,0,0,0],n:0});
+  s.pts+=(pts||0); s.n++; if(place>=1&&place<=8) s.g[place-1]++;
+}
+function xiDotHtml(p, isCap, tip){
+  const kit=clubKit(p.club||"");
+  const rt = p.rating ? String(Math.round(p.rating*10)/10) : "";
+  const style=`background:${kit.bg};color:${kit.fg};box-shadow:0 3px 12px rgba(6,4,20,.45),inset 0 0 0 2px ${kit.ring}`;
+  return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot${rt?" has-rt":""}" style="${style}">${rt||p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`;
+}
 let TOURN_FILTER = {cat:"all", player:"all"};
 function buildTOTS(TOURS, SCORERS, elId){
   const el=document.getElementById(elId); if(!el) return;
@@ -1356,8 +1419,8 @@ function buildTOTS(TOURS, SCORERS, elId){
     (tm.best||[]).forEach(b=>{ if(b&&b.name&&b.pos) names.add(b.name); });
     (tm._perf||[]).forEach(n=>names.add(n));
     names.forEach(name=>{ const k=nn(name); const pos=POS[k]; if(!pos) return;
-      const a=agg[k]=agg[k]||{name, pos, points:0, g:[0,0,0,0,0,0,0,0], apps:0, rating:RAT[k]||0, tp:(tpRank[k]!=null?tpRank[k]:Infinity)};
-      a.points+=(tm.points||0); a.apps++; if(tm.place>=1&&tm.place<=8) a.g[tm.place-1]++; });
+      const a=agg[k]=agg[k]||{name, pos, points:0, g:[0,0,0,0,0,0,0,0], apps:0, rating:RAT[k]||0, tp:(tpRank[k]!=null?tpRank[k]:Infinity), cl:{}};
+      a.points+=(tm.points||0); a.apps++; if(tm.place>=1&&tm.place<=8) a.g[tm.place-1]++; xiClubStat(a, tm.club, tm.points, tm.place); });
   }));
   const cmp=(a,b)=>{ if(b.points!==a.points) return b.points-a.points; for(let i=0;i<8;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; } if(b.apps!==a.apps) return b.apps-a.apps; if(a.tp!==b.tp) return a.tp-b.tp; return b.rating-a.rating; };
   const byPos={GK:[],DF:[],MF:[],FW:[]};
@@ -1375,8 +1438,9 @@ function buildTOTS(TOURS, SCORERS, elId){
   const ordArr=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
   const capKey=xi.length?nn([...xi].sort(cmp)[0].name):"";
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", "); const isCap=nn(p.name)===capKey;
-    const tip=`${isCap?"(C) ":""}${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}${p.rating?" \u00b7 "+p.rating:""}`;
-    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`; };
+    p.club=bestClubOf(p.cl);
+    const tip=`${isCap?"(C) ":""}${p.slot}${p.club?" \u00b7 "+p.club:""}${p.rating?" \u00b7 "+p.rating:""} \u00b7 ${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}`;
+    return xiDotHtml(p, isCap, tip); };
   el.innerHTML = xi.length ? (`<div class="tots-form">Formation ${formation}</div><div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`) : "";
 }
 function computeTOTS(){ buildTOTS(typeof CUR_TOURNAMENTS!=="undefined"?CUR_TOURNAMENTS:[], typeof SCORERS_LIST!=="undefined"?SCORERS_LIST:[], "tots-pitch"); }
@@ -2243,8 +2307,8 @@ function renderPlayer(nick){
     t.best.forEach(b=>{ if(b&&b.name&&b.pos) names.add(b.name); });
     (t.perf||[]).forEach(n=>names.add(n));
     names.forEach(name=>{ const k=nn(name); const pos=POS[k]; if(!pos) return;
-      const a=agg[k]=agg[k]||{name, pos, points:0, g:[0,0,0,0,0,0,0,0], apps:0, rating:RAT[k]||0, tp:(tpRank[k]!=null?tpRank[k]:Infinity)};
-      a.points+=t.points; a.apps++; if(t.place>=1&&t.place<=8) a.g[t.place-1]++; });
+      const a=agg[k]=agg[k]||{name, pos, points:0, g:[0,0,0,0,0,0,0,0], apps:0, rating:RAT[k]||0, tp:(tpRank[k]!=null?tpRank[k]:Infinity), cl:{}};
+      a.points+=t.points; a.apps++; if(t.place>=1&&t.place<=8) a.g[t.place-1]++; xiClubStat(a, t.club, t.points, t.place); });
   });
   const cmp=(a,b)=>{ if(b.points!==a.points) return b.points-a.points; for(let i=0;i<8;i++){ if(b.g[i]!==a.g[i]) return b.g[i]-a.g[i]; } if(b.apps!==a.apps) return b.apps-a.apps; if(a.tp!==b.tp) return a.tp-b.tp; return b.rating-a.rating; };
   const byPos={GK:[],DF:[],MF:[],FW:[]};
@@ -2264,8 +2328,9 @@ function renderPlayer(nick){
   const capKey = xi.length ? nn([...xi].sort(cmp)[0].name) : "";
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", ");
     const isCap = nn(p.name)===capKey;
-    const tip=`${isCap?"(C) ":""}${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}${p.rating?" \u00b7 "+p.rating:""}`;
-    return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot">${p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`; };
+    p.club=bestClubOf(p.cl);
+    const tip=`${isCap?"(C) ":""}${p.slot}${p.club?" \u00b7 "+p.club:""}${p.rating?" \u00b7 "+p.rating:""} \u00b7 ${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}`;
+    return xiDotHtml(p, isCap, tip); };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI by points won, finishes and performances \u00b7 ${formation}</span></div>`
     + `<div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`;
