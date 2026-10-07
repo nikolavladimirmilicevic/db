@@ -464,11 +464,13 @@ svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 .xi-cap{position:absolute;top:-4px;right:-4px;width:17px;height:17px;border-radius:50%;background:#f5c518;color:#1a1533;font-family:'Fredoka',sans-serif;font-weight:600;font-size:9px;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .xi-nm{font-family:'Nunito',sans-serif;font-weight:700;font-size:11px;text-align:center;width:100%;white-space:normal;line-height:1.2;color:var(--white)}
 .xi-dot.has-rt{font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;letter-spacing:.2px}
+.xi-dy-u2,.xi-dy-u1,.xi-dy-d1,.xi-dy-d2{position:relative}
+.xi-dy-u2{top:-8px}.xi-dy-u1{top:-4px}.xi-dy-d1{top:4px}.xi-dy-d2{top:8px}
 .xi-GK .xi-dot{background:var(--silver);color:var(--ink)}
 .xi-DF .xi-dot{background:#2f66d6;color:#fff}
 .xi-MF .xi-dot{background:var(--cyan);color:var(--ink)}
 .xi-FW .xi-dot{background:#f23e50;color:#fff}
-@media(max-width:620px){.xi-row{max-width:none}.xi-player{width:66px}.xi-dot{width:34px;height:34px;font-size:10px}.xi-dot.has-rt{font-size:12px}.xi-nm{font-size:10px}}
+@media(max-width:620px){.xi-row{max-width:none}.xi-player{width:66px}.xi-dot{width:34px;height:34px;font-size:10px}.xi-dot.has-rt{font-size:12px}.xi-nm{font-size:10px}.xi-dy-u2{top:-6px}.xi-dy-u1{top:-3px}.xi-dy-d1{top:3px}.xi-dy-d2{top:6px}}
 .up-tourn{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
 .up-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .up-name{font-family:'Fredoka',sans-serif;font-weight:600;font-size:19px}
@@ -1338,6 +1340,42 @@ function renderSquad(){
     </a>`;
   }).join("");
 }
+/* ---- PES 2021 position index: left/right placement inside each XI line ---- */
+const PES_POS_URL  = "pes21-positions.txt";
+const PES_POSN = ["GK","CB","LB","RB","DMF","CMF","LMF","RMF","AMF","LWF","RWF","SS","CF"];
+const PES_LINE = {GK:"GK",CB:"DF",LB:"DF",RB:"DF",DMF:"MF",CMF:"MF",LMF:"MF",RMF:"MF",AMF:"MF",LWF:"FW",RWF:"FW",SS:"FW",CF:"FW"};
+const PES_SIDE = {LB:-1,LMF:-1,LWF:-1,RB:1,RMF:1,RWF:1};
+const PES_DY   = {LB:"u1",RB:"u1",AMF:"u2",DMF:"d2",SS:"d2",LWF:"d1",RWF:"d1"};
+const XI_REDRAW = {};
+let PES_POS = null, PES_POS_TRIED = false;
+function pesName(s){ return String(s||"").toUpperCase().normalize("NFD").replace(/[̀-ͯ]/g,"")
+  .replace(/['’\-.]/g," ").replace(/[^A-Z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+function loadPesPositions(){
+  if(PES_POS_TRIED) return; PES_POS_TRIED = true;
+  fetch(PES_POS_URL).then(r=>r.ok?r.text():null).then(txt=>{
+    if(!txt) return;
+    const m={};
+    txt.split("\n").forEach(ln=>{ const i=ln.lastIndexOf("|"); if(i<1) return; m[ln.slice(0,i)]=+ln.slice(i+1); });
+    PES_POS=m;
+    Object.keys(XI_REDRAW).forEach(k=>{ try{ XI_REDRAW[k](); }catch(e){} });
+  }).catch(()=>{});
+}
+function pesPos(name, line){
+  if(!PES_POS) return null;
+  const t=pesName(name).split(" ").filter(Boolean);
+  if(!t.length) return null;
+  const keys = t.length===1 ? [t[0]]
+    : [ t[0][0]+" "+t.slice(1).join(" "), t[t.length-1][0]+" "+t.slice(0,-1).join(" ") ];
+  for(let i=0;i<keys.length;i++){ const v=PES_POS[keys[i]];
+    if(v!=null){ const p=PES_POSN[v]; if(!line || PES_LINE[p]===line) return p; } }
+  return null;
+}
+function xiArrange(list, line, cmp, centerOut){
+  const L=[], C=[], R=[];
+  list.slice().sort(cmp).forEach(p=>{ const d=pesPos(p.name, line); p.pes=d||null;
+    const s=d?(PES_SIDE[d]||0):0; (s<0?L:(s>0?R:C)).push(p); });
+  return L.reverse().concat(centerOut(C), R);
+}
 /* ---- Club kit colours for the ideal XI circles ---- */
 const CLUB_KIT_DATA = "arsenal|ef0107|ffffff;aston villa|670e36|95bfe5;bournemouth|da291c|111111;brentford|e30613|ffffff;brighton|0057b8|ffffff;brighton and hove albion|0057b8|ffffff;burnley|6c1d45|99d6ea;chelsea|034694|ffffff;crystal palace|1b458f|c4122e;everton|003399|ffffff;fulham|ffffff|111111;leeds united|ffffff|1d428a;leicester city|003090|fdbe11;liverpool|c8102e|ffffff;manchester city|6cabdd|0a3a66;man city|6cabdd|0a3a66;manchester united|da020e|fbe122;man united|da020e|fbe122;man utd|da020e|fbe122;newcastle united|241f20|ffffff;newcastle|241f20|ffffff;nottingham forest|dd0000|ffffff;forest|dd0000|ffffff;sheffield united|ee2737|111111;southampton|d71920|ffffff;sunderland|eb172b|ffffff;tottenham hotspur|ffffff|132257;tottenham|ffffff|132257;spurs|ffffff|132257;west ham united|7a263a|1bb1e7;west ham|7a263a|1bb1e7;wolverhampton wanderers|fdb913|231f20;wolves|fdb913|231f20;ipswich town|3a64a3|ffffff;norwich city|fff200|00a650;watford|fbee23|11210c;stoke city|e03a3e|ffffff;middlesbrough|dc2429|ffffff;derby county|ffffff|111111;birmingham city|1a3a9c|ffffff;blackburn rovers|009ee0|ffffff;" +
 "barcelona|a50044|ffe400;real madrid|ffffff|1b3b6f;atletico madrid|cb3524|ffffff;atletico de madrid|cb3524|ffffff;atleti|cb3524|ffffff;athletic bilbao|ee2523|ffffff;athletic club|ee2523|ffffff;real sociedad|0067b1|ffffff;real betis|00954c|ffffff;betis|00954c|ffffff;sevilla|ffffff|d9182e;valencia|ffffff|ee7c00;villarreal|ffe667|004b87;celta vigo|8ac3ee|e5231f;celta|8ac3ee|e5231f;getafe|005999|ffffff;osasuna|0a346f|ffffff;rayo vallecano|ffffff|e53027;espanyol|0077c8|ffffff;alaves|005bac|ffffff;elche|ffffff|00944d;girona|e0152b|ffffff;mallorca|e20613|ffe000;las palmas|ffe400|005ca9;levante|004fa3|b4053d;cadiz|ffe500|002d62;granada|a61b2b|ffffff;real valladolid|621c44|ffffff;valladolid|621c44|ffffff;leganes|0b4ea2|ffffff;almeria|e63329|ffffff;eibar|0c2c67|e63329;deportivo la coruna|0e4fa1|ffffff;real zaragoza|ffffff|004a99;" +
@@ -1345,10 +1383,10 @@ const CLUB_KIT_DATA = "arsenal|ef0107|ffffff;aston villa|670e36|95bfe5;bournemou
 "bayern munich|dc052d|ffffff;bayern|dc052d|ffffff;borussia dortmund|fde100|111111;dortmund|fde100|111111;rb leipzig|dd0741|ffffff;leipzig|dd0741|ffffff;bayer leverkusen|e32221|111111;leverkusen|e32221|111111;eintracht frankfurt|111111|e1000f;frankfurt|111111|e1000f;borussia monchengladbach|ffffff|11a64a;gladbach|ffffff|11a64a;stuttgart|ffffff|e32219;wolfsburg|65b32e|ffffff;schalke|004d9d|ffffff;werder bremen|1d9053|ffffff;hoffenheim|1c63b7|ffffff;freiburg|e2001a|ffffff;mainz|c3141e|ffffff;union berlin|e3261c|ffe500;hertha berlin|004d9d|ffffff;augsburg|ba3733|ffffff;hamburger sv|005ca9|ffffff;" +
 "paris saint germain|004170|da291c;psg|004170|da291c;marseille|2faee0|ffffff;olympique marseille|2faee0|ffffff;lyon|ffffff|1a3a6b;olympique lyonnais|ffffff|1a3a6b;monaco|e63329|ffffff;lille|e01e13|ffffff;nice|e2001a|111111;rennes|9e1b32|111111;saint etienne|00843d|ffffff;nantes|ffe500|11a64a;bordeaux|00285e|9e1b32;lens|ffe500|e2001a;montpellier|0b2c5e|e2001a;strasbourg|00a3e0|ffffff;toulouse|6a2c8f|ffffff;" +
 "ajax|ffffff|d2122e;psv|e2001a|ffffff;psv eindhoven|e2001a|ffffff;feyenoord|c8102e|ffffff;az alkmaar|da291c|ffffff;benfica|d40000|ffffff;porto|00428c|ffffff;sporting|008057|ffffff;sporting cp|008057|ffffff;sporting lisbon|008057|ffffff;braga|9e1b32|ffffff;galatasaray|e8a50b|a90432;fenerbahce|ffe500|00235b;besiktas|111111|ffffff;trabzonspor|7b1e29|6cb2e4;club brugge|0a4595|111111;anderlecht|6a1f2b|ffffff;shakhtar donetsk|f26522|111111;zenit|009bdf|0a2c5e;spartak moscow|e2001a|ffffff;cska moscow|004a99|e2001a;dynamo kyiv|ffffff|0a4595;crvena zvezda|e2001a|ffffff;red star belgrade|e2001a|ffffff;partizan|111111|ffffff;olympiacos|d2122e|ffffff;panathinaikos|006a3b|ffffff;celtic|018749|ffffff;rangers|1a2f9c|ffffff;basel|e2001a|00529b;young boys|ffe500|111111;salzburg|e2001a|ffffff;rapid wien|11a64a|ffffff;dinamo zagreb|0057b8|ffffff;legia warsaw|11a64a|ffffff;boca juniors|0b3e8c|fdb913;river plate|ffffff|e2001a;flamengo|c8102e|111111;palmeiras|006437|ffffff;corinthians|111111|ffffff;santos|ffffff|111111;sao paulo|ffffff|e2001a;gremio|0d80bf|111111;al nassr|ffe500|0a4595;al hilal|0a4595|ffffff;" +
-"argentina|75aadb|ffffff;brazil|ffdf00|009739;france|1f3a93|ffffff;england|ffffff|ce1124;spain|c60b1e|ffc400;germany|ffffff|111111;italy|0066b2|ffffff;portugal|c60b1e|046a38;netherlands|f36c21|ffffff;belgium|c8102e|ffe500;croatia|ffffff|e2001a;serbia|c6363c|ffffff;uruguay|74aee0|111111;colombia|ffe500|0a3161;mexico|006847|ffffff;usa|ffffff|0a3161;japan|0a1d63|ffffff;south korea|e2001a|ffffff;australia|ffe500|00843d;switzerland|d52b1e|ffffff;denmark|c60c30|ffffff;sweden|ffe500|0057b8;norway|ba0c2f|ffffff;poland|ffffff|dc143c;ukraine|ffe500|0057b8;russia|ffffff|0039a6;turkey|e30a17|ffffff;austria|ed2939|ffffff;czech republic|d7141a|ffffff;wales|c8102e|ffffff;scotland|005eb8|ffffff;ireland|169b62|ff883e;nigeria|008751|ffffff;senegal|00853f|fdef42;morocco|c1272d|006233;egypt|ce1126|ffffff;ghana|ffffff|006b3f;cameroon|007a5e|fcd116;ivory coast|f77f00|009e60;algeria|007229|ffffff;tunisia|e70013|ffffff;chile|d52b1e|0039a6;peru|ffffff|d91023;ecuador|ffd100|0a3161;paraguay|e2001a|0038a8;costa rica|e2001a|002b7f;canada|d80621|ffffff;china|de2910|ffe500;saudi arabia|006c35|ffffff;iran|ffffff|239f40;qatar|8a1538|ffffff;greece|0d5eaf|ffffff;romania|ffe500|002b7f;hungary|cd2a3e|ffffff;bosnia and herzegovina|002f6c|ffe500;slovenia|ffffff|005da4;slovakia|0b4ea2|ffffff;finland|ffffff|003580;iceland|02529c|ffffff;north macedonia|d20000|ffe500;montenegro|c40308|ffd100;albania|e41e20|111111;new zealand|ffffff|111111;south africa|007a4d|ffb81c;jamaica|111111|ffd100";
-const CLUB_DROP = new Set(["fc","afc","ac","as","sc","ssc","cf","cd","rcd","ud","sd","rc","us","ss","sv","vfb","vfl","tsg","fsv","bsc","sk","nk","hnk","fk","bk","if","cp","club","de","the"]);
+"argentina|75aadb|ffffff;brazil|ffdf00|009739;france|1f3a93|ffffff;england|ffffff|ce1124;spain|c60b1e|ffc400;germany|ffffff|111111;italy|0066b2|ffffff;portugal|c60b1e|046a38;netherlands|f36c21|ffffff;belgium|c8102e|ffe500;croatia|ffffff|e2001a;serbia|c6363c|ffffff;uruguay|74aee0|111111;colombia|ffe500|0a3161;mexico|006847|ffffff;usa|ffffff|0a3161;japan|0a1d63|ffffff;south korea|e2001a|ffffff;australia|ffe500|00843d;switzerland|d52b1e|ffffff;denmark|c60c30|ffffff;sweden|ffe500|0057b8;norway|ba0c2f|ffffff;poland|ffffff|dc143c;ukraine|ffe500|0057b8;russia|ffffff|0039a6;turkey|e30a17|ffffff;austria|ed2939|ffffff;czech republic|d7141a|ffffff;wales|c8102e|ffffff;scotland|005eb8|ffffff;ireland|169b62|ff883e;nigeria|008751|ffffff;senegal|00853f|fdef42;morocco|c1272d|006233;egypt|ce1126|ffffff;ghana|ffffff|006b3f;cameroon|007a5e|fcd116;ivory coast|f77f00|009e60;algeria|007229|ffffff;tunisia|e70013|ffffff;chile|d52b1e|0039a6;peru|ffffff|d91023;ecuador|ffd100|0a3161;paraguay|e2001a|0038a8;costa rica|e2001a|002b7f;canada|d80621|ffffff;china|de2910|ffe500;saudi arabia|006c35|ffffff;iran|ffffff|239f40;qatar|8a1538|ffffff;greece|0d5eaf|ffffff;romania|ffe500|002b7f;hungary|cd2a3e|ffffff;bosnia and herzegovina|002f6c|ffe500;slovenia|ffffff|005da4;slovakia|0b4ea2|ffffff;finland|ffffff|003580;iceland|02529c|ffffff;north macedonia|d20000|ffe500;montenegro|c40308|ffd100;albania|e41e20|111111;new zealand|ffffff|111111;south africa|007a4d|ffb81c;jamaica|111111|ffd100;koln|e2001a|ffffff;cologne|e2001a|ffffff;heidenheim|1a4ea2|e2001a;st pauli|6b3f2a|ffffff;bochum|005ca9|ffffff;holstein kiel|0b2c5e|ffffff;hannover|11a64a|ffffff;nurnberg|9e1b32|ffffff;fortuna dusseldorf|e2001a|ffffff;kaiserslautern|c8102e|ffffff;ajax amsterdam|ffffff|d2122e;groningen|11a64a|ffffff;utrecht|e2001a|ffffff;volendam|e2001a|ffffff;fortuna sittard|ffe500|11a64a;go ahead eagles|e2001a|ffe500;heracles|111111|ffe500;nac breda|ffe500|111111;heerenveen|0057b8|e2001a;telstar|ffffff|ffe500;sparta|e2001a|ffffff;twente|e2001a|ffffff;nec|e2001a|11a64a;pec zwolle|0057b8|ffffff;rkc waalwijk|ffe500|0057b8;willem ii|e2001a|ffffff;excelsior|e2001a|111111;vitesse|ffe500|111111;aberdeen|e2001a|ffffff;dundee united|f36c21|111111;heart of midlothian|7a263a|ffffff;hearts|7a263a|ffffff;hibernian|11a64a|ffffff;kilmarnock|0057b8|111111;livingston|ffe500|111111;motherwell|ffe500|9e1b32;st mirren|111111|ffffff;dundee|0a2c5e|ffffff;st johnstone|0057b8|ffffff;ross county|0a2c5e|ffffff;charlton athletic|e2001a|ffffff;coventry city|6cabdd|111111;hull city|f36c21|111111;millwall|0a2c5e|ffffff;portsmouth|0057b8|ffffff;preston north end|ffffff|0a2c5e;swansea city|ffffff|111111;west bromwich albion|0a2c5e|ffffff;wrexham|e2001a|ffffff;bristol city|9e1b32|ffffff;cardiff city|0057b8|ffffff;queens park rangers|0057b8|ffffff;luton town|f36c21|0a2c5e;plymouth argyle|00573f|ffffff;oxford united|ffe500|0a2c5e;sheffield wednesday|0057b8|ffffff;blackpool|f36c21|ffffff;barnsley|e2001a|ffffff;reading|0057b8|ffffff;bolton wanderers|ffffff|0a2c5e;ceuta|ffffff|e2001a;burgos|111111|ffe500;castellon|111111|f36c21;mirandes|e2001a|111111;andorra|e2001a|0038a8;malaga|0a4fa3|ffffff;racing santander|ffffff|11a64a;sporting gijon|e2001a|ffffff;huesca|0057b8|e2001a;tenerife|0057b8|ffffff;cordoba|ffffff|11a64a;albacete|ffffff|111111;cultural leonesa|ffffff|9e1b32;metz|9e1b32|ffffff;paris fc|0a2c5e|e2001a;reims|e2001a|ffffff;brest|e2001a|ffffff;brestois|e2001a|ffffff;rennais|9e1b32|111111;le havre|6cabdd|0a2c5e;auxerre|ffffff|0057b8;angers|ffffff|111111;lorient|f36c21|111111;cremonese|9e1b32|111111;pisa|0a2c5e|ffffff;inter miami|f2559c|111111;curacao|0057b8|ffe500;czechia|d7141a|ffffff;democratic republic of the congo|0057b8|ffe500;dr congo|0057b8|ffe500;haiti|0038a8|e2001a;jordan|111111|e2001a;panama|e2001a|0a2c5e;united states|ffffff|0a3161;uzbekistan|ffffff|0057b8;sociedad|0067b1|ffffff;betis|00954c|ffffff;atletico|cb3524|ffffff";
+const CLUB_DROP = new Set(["fc","afc","ac","acf","as","sc","ssc","cf","cfc","cd","rcd","ud","sd","rc","us","ss","sv","vfb","vfl","tsg","fsv","bsc","sk","nk","hnk","fk","bk","if","cp","bc","ca","ad","ogc","osc","losc","sv","calcio","club","de","the","olympique","stade","balompie","amsterdam","rotterdam","enschede","alsace","almelo"]);
 function clubKey(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/&/g," and ").replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
-function clubKeyShort(s){ return clubKey(s).split(" ").filter(w=>!CLUB_DROP.has(w)).join(" "); }
+function clubKeyShort(s){ return clubKey(s).split(" ").filter(w=>w&&!CLUB_DROP.has(w)&&!/^\d+$/.test(w)).join(" "); }
 let CLUB_KIT_MAP = null;
 function clubKitMap(){
   if(CLUB_KIT_MAP) return CLUB_KIT_MAP;
@@ -1372,6 +1410,8 @@ function hslHex(h,s,l){ const a=s*Math.min(l,1-l);
 function clubKit(club){
   const m=clubKitMap(), k=clubKey(club);
   let hit = m[k] || m[clubKeyShort(club)];
+  if(!hit){ const toks=clubKeyShort(club).split(" ").filter(Boolean);
+    for(let i=0;i<toks.length && !hit;i++){ if(toks[i].length>=4) hit=m[toks[i]]; } }
   if(!hit){ const src=k||"x"; let h=2166136261;
     for(let i=0;i<src.length;i++){ h^=src.charCodeAt(i); h=Math.imul(h,16777619); }
     hit={ bg:hslHex((h>>>0)%360, 0.44, 0.40), fg:"#ffffff" }; m[k]=hit; }
@@ -1396,13 +1436,15 @@ function xiClubStat(a, club, pts, place){
 }
 function xiDotHtml(p, isCap, tip){
   const kit=clubKit(p.club||"");
+  const dy = (p.pes && PES_DY[p.pes]) ? " xi-dy-"+PES_DY[p.pes] : "";
   const rt = p.rating ? String(Math.round(p.rating*10)/10) : "";
   const style=`background:${kit.bg};color:${kit.fg};box-shadow:0 3px 12px rgba(6,4,20,.45),inset 0 0 0 2px ${kit.ring}`;
-  return `<div class="xi-player xi-${p.slot}" title="${tip}"><div class="xi-dot${rt?" has-rt":""}" style="${style}">${rt||p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`;
+  return `<div class="xi-player xi-${p.slot}${dy}" title="${tip}"><div class="xi-dot${rt?" has-rt":""}" style="${style}">${rt||p.slot}${isCap?'<span class="xi-cap">C</span>':''}</div><div class="xi-nm">${p.name}</div></div>`;
 }
 let TOURN_FILTER = {cat:"all", player:"all"};
 function buildTOTS(TOURS, SCORERS, elId){
   const el=document.getElementById(elId); if(!el) return;
+  XI_REDRAW[elId]=()=>buildTOTS(TOURS, SCORERS, elId); loadPesPositions();
   if(!TOURS || !TOURS.length){ el.innerHTML=""; return; }
   const nn=str=>(str||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," ").trim();
   const POS={}, RAT={};
@@ -1433,13 +1475,13 @@ function buildTOTS(TOURS, SCORERS, elId){
     let cands=[]; ["DF","MF","FW"].forEach(pos=>{ if(byPos[pos].length && c[pos]<maxP[pos]) cands.push(byPos[pos][0]); });
     if(!cands.length) break; cands.sort(cmp); const pick=cands[0]; xi.push({...byPos[pick.pos].shift(), slot:pick.pos}); }
   const centerOut=arr=>{ const r=[]; arr.forEach((x,i)=>{ if(i%2===0) r.push(x); else r.unshift(x); }); return r; };
-  const rowGK=xi.filter(p=>p.slot==="GK"), rowFW=centerOut(xi.filter(p=>p.slot==="FW").sort(cmp)), rowMF=centerOut(xi.filter(p=>p.slot==="MF").sort(cmp)), rowDF=centerOut(xi.filter(p=>p.slot==="DF").sort(cmp));
+  const rowGK=xi.filter(p=>p.slot==="GK"), rowFW=xiArrange(xi.filter(p=>p.slot==="FW"),"FW",cmp,centerOut), rowMF=xiArrange(xi.filter(p=>p.slot==="MF"),"MF",cmp,centerOut), rowDF=xiArrange(xi.filter(p=>p.slot==="DF"),"DF",cmp,centerOut);
   const formation=`${xi.filter(p=>p.slot==="DF").length}-${xi.filter(p=>p.slot==="MF").length}-${xi.filter(p=>p.slot==="FW").length}`;
   const ordArr=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
   const capKey=xi.length?nn([...xi].sort(cmp)[0].name):"";
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", "); const isCap=nn(p.name)===capKey;
     p.club=bestClubOf(p.cl);
-    const tip=`${isCap?"(C) ":""}${p.slot}${p.club?" \u00b7 "+p.club:""}${p.rating?" \u00b7 "+p.rating:""} \u00b7 ${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}`;
+    const tip=`${isCap?"(C) ":""}${p.pes||p.slot}${p.club?" \u00b7 "+p.club:""}${p.rating?" \u00b7 "+p.rating:""} \u00b7 ${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}`;
     return xiDotHtml(p, isCap, tip); };
   el.innerHTML = xi.length ? (`<div class="tots-form">Formation ${formation}</div><div class="xi-pitch">` + [rowFW,rowMF,rowDF,rowGK].filter(r=>r.length).map(r=>`<div class="xi-row ${r.length===1?"xi-row-solo":""}" style="max-width:${r.length*132}px">${r.map(dot).join("")}</div>`).join("") + `</div>`) : "";
 }
@@ -2252,6 +2294,7 @@ function setSpPots(val){
   document.getElementById("sp-pots-card").hidden = !ok;
 }
 function renderPlayer(nick){
+  XI_REDRAW["pp-season"]=()=>renderPlayer(nick); loadPesPositions();
   const idx = (VECNA.rows||[]).findIndex(r=>r.name===nick);
   const row = idx>=0 ? VECNA.rows[idx] : null;
   document.getElementById("pp-nick").textContent = nick;
@@ -2321,15 +2364,15 @@ function renderPlayer(nick){
     let cands=[]; ["DF","MF","FW"].forEach(pos=>{ if(byPos[pos].length && c[pos]<maxP[pos]) cands.push(byPos[pos][0]); });
     if(!cands.length) break; cands.sort(cmp); const pick=cands[0]; xi.push({...byPos[pick.pos].shift(), slot:pick.pos}); }
   const centerOut=arr=>{ const r=[]; arr.forEach((x,i)=>{ if(i%2===0) r.push(x); else r.unshift(x); }); return r; };
-  const arrange=list=>centerOut([...list].sort(cmp));
-  const rowGK=xi.filter(p=>p.slot==="GK"), rowFW=arrange(xi.filter(p=>p.slot==="FW")), rowMF=arrange(xi.filter(p=>p.slot==="MF")), rowDF=arrange(xi.filter(p=>p.slot==="DF"));
+  const arrange=(list,line)=>xiArrange(list,line,cmp,centerOut);
+  const rowGK=xi.filter(p=>p.slot==="GK"), rowFW=arrange(xi.filter(p=>p.slot==="FW"),"FW"), rowMF=arrange(xi.filter(p=>p.slot==="MF"),"MF"), rowDF=arrange(xi.filter(p=>p.slot==="DF"),"DF");
   const formation=`${xi.filter(p=>p.slot==="DF").length}-${xi.filter(p=>p.slot==="MF").length}-${xi.filter(p=>p.slot==="FW").length}`;
   const ordArr=["1st","2nd","3rd","4th","5th","6th","7th","8th"];
   const capKey = xi.length ? nn([...xi].sort(cmp)[0].name) : "";
   const dot=(p)=>{ const fins=p.g.map((n,i)=> n?`${n}\u00d7${ordArr[i]}`:"").filter(Boolean).join(", ");
     const isCap = nn(p.name)===capKey;
     p.club=bestClubOf(p.cl);
-    const tip=`${isCap?"(C) ":""}${p.slot}${p.club?" \u00b7 "+p.club:""}${p.rating?" \u00b7 "+p.rating:""} \u00b7 ${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}`;
+    const tip=`${isCap?"(C) ":""}${p.pes||p.slot}${p.club?" \u00b7 "+p.club:""}${p.rating?" \u00b7 "+p.rating:""} \u00b7 ${nf(p.points)} pts \u00b7 ${p.apps} app${p.apps===1?'':'s'}${fins?" \u00b7 "+fins:""}${p.tp<Infinity?" \u00b7 TP #"+p.tp:""}`;
     return xiDotHtml(p, isCap, tip); };
   let seasonHtml="";
   if(xi.length) seasonHtml += `<div class="perf-head">Winning Eleven <span>best XI by points won, finishes and performances \u00b7 ${formation}</span></div>`
