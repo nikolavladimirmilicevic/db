@@ -493,6 +493,7 @@ svg a text{cursor:pointer}svg a:hover text{fill:var(--white) !important}
 .tr-best .tr-bp{display:inline-flex;align-items:baseline;gap:5px;margin-right:14px;white-space:nowrap}
 .tr-best .tr-bp em{font-style:normal;color:var(--muted);font-size:9.5px;font-weight:800;letter-spacing:.05em}
 .up-team.is-taken{border-width:2px;border-color:rgba(0,184,232,.6)}
+.up-team.is-duo{background-origin:border-box;background-clip:padding-box,border-box}
 .up-taken{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:8px;border-top:2px solid rgba(170,160,220,.22)}
 .up-taker{display:inline-flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;font-size:11.5px;font-weight:800;color:var(--white);background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:3px 10px 3px 7px}
 .up-kit{width:8px;height:8px;border-radius:50%;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.18)}
@@ -1297,6 +1298,7 @@ function shadeFromPhoto(src, cfg){
 }
 function paintKits(){
   renderSquad();
+  if(typeof renderUpcoming==="function") renderUpcoming();
   if(LAST_STANDINGS) renderStandings(LAST_STANDINGS);
   renderRace();
 }
@@ -1522,7 +1524,11 @@ function renderUpcoming(){
         const best=(tm.best||[]).map(b=>`<span class="up-bp"><em>${b.pos}</em> ${b.name}${b.rating?` ${rate(b.rating)}`:""}</span>`).join("");
         const takers=(tm.by||"").split(" + ").map(x=>x.trim()).filter(Boolean);
         const taken=takers.length?`<div class="up-taken">${takers.map(n=>`<a class="up-taker nm-link" href="#player-${encodeURIComponent(n)}"><span class="up-kit" style="background:${kitColor(n)}"></span>${n}</a>`).join("")}</div>`:"";
-        return `<div class="up-team${takers.length?" is-taken":""}"><div class="up-team-top"><span class="up-club">${tm.club}</span>${starRow(tm.stars)}</div>`
+        const cols=takers.map(n=>kitColor(n));
+        const duo=cols.length>1;
+        const tint = cols.length===1 ? ` style="border-color:${cols[0]}"`
+          : (duo ? ` style="border-color:transparent;background-image:linear-gradient(var(--ink-2),var(--ink-2)),linear-gradient(120deg,${cols.join(",")})"` : "");
+        return `<div class="up-team${takers.length?" is-taken":""}${duo?" is-duo":""}"${tint}><div class="up-team-top"><span class="up-club">${tm.club}</span>${starRow(tm.stars)}</div>`
           + `<div class="up-lines">${lines}${tm.avg?`<span class="up-avg"><i>AVG</i> ${rate(tm.avg)}</span>`:""}</div>`
           + (best?`<div class="up-best">${best}</div>`:"") + taken + `</div>`;
       }).join("");
