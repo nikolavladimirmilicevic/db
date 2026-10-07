@@ -1371,13 +1371,19 @@ function xiRows(xi, cmp){
   const mf=pick("MF"); mf.forEach(p=>{ p.pes = pesPos(p.name,"MF"); });
   const band=(list,line)=>xiArrange(list, line, cmp, centerOut);
   const fw  = band(pick("FW"),"FW");
-  const amf = band(mf.filter(p=>p.pes==="AMF"),"MF");
-  const mid = band(mf.filter(p=>p.pes!=="AMF"&&p.pes!=="DMF"),"MF");
-  const dmf = band(mf.filter(p=>p.pes==="DMF"),"MF");
   const df  = band(pick("DF"),"DF");
   const gk  = pick("GK");
-  const rows = [fw, amf, mid, dmf, df, gk].filter(r=>r.length);
-  const formation = [df.length, dmf.length, mid.length, amf.length, fw.length].filter(n=>n>0).join("-");
+  const A = mf.filter(p=>p.pes==="AMF");
+  const D = mf.filter(p=>p.pes==="DMF");
+  const C = mf.filter(p=>p.pes!=="AMF"&&p.pes!=="DMF");
+  // the midfield is one or two lines, never three: the plain middle joins the deeper one
+  let mfBands;
+  if(A.length && (C.length||D.length)) mfBands=[A, C.concat(D)];
+  else if(C.length && D.length)        mfBands=[C, D];
+  else                                 mfBands=[A.concat(C, D)];
+  mfBands = mfBands.filter(r=>r.length).map(r=>band(r,"MF"));
+  const rows = [fw].concat(mfBands, [df, gk]).filter(r=>r.length);
+  const formation = [df.length].concat(mfBands.map(r=>r.length).reverse(), [fw.length]).filter(n=>n>0).join("-");
   return { rows, formation };
 }
 function xiArrange(list, line, cmp, centerOut){
